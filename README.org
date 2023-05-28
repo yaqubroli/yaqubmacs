@@ -1,0 +1,21 @@
+* Yaqubmacs
+
+This repo is where I store my emacs config. Here's how my system is set up:
+
+I have two folders that are stored on OneDrive (it's what my uni uses for cloud storage.)
+
+- ~dev~ (contains cloned repos, like this one, and general development files)
+- ~org~ (contains orgfiles, org-roam files, and ~settings/~ which is my literate emacs config and linked to ~/settings~ in this repo)
+
+Everything is symlinked as follows:
+
+- ~dev~ -> ~\~/dev~
+- ~org~ -> ~\~/org~
+- ~\~/dev/yaqubmacs/init.el~ -> ~\~/.emacs.d/init.el~
+- ~\~/dev/yaqubmacs/early-init.el~ -> ~\~/.emacs.d/early-init.el~
+
+And for the sake of having everything in this repo:
+
+- ~\~/org/settings~ -> ~\~/dev/yaqubmacs/settings~
+
+I have two seperate settings files for *cosmetic* and *core* settings. This is because I'm intending to access terminal emacs remotely quite often, and theming is often broken + I can just theme the terminal.

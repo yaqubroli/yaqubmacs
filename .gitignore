@@ -1,0 +1,21 @@
+# .gitignore
+# Ignore files created by emacs
+*~
+.\#*
+\#*\#
+
+# Ignore emacs lock files
+.#*
+
+# Ignore autosave files
+*#
+
+# Ignore files created by interleave package
+*-notes.org
+*-notes.pdf
+
+# Ignore files created by org-download package
+*/*_images/
+
+# Ignore org-roam.db if you use org-roam
+org-roam.db
