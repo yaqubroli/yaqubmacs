@@ -1,0 +1,104 @@
+* Cosmetic Settings
+
+This file contains cosmetic settings for Emacs, which are only loaded in GUI mode.
+
+** Olivetti
+
+Setup for the Olivetti package.
+
+#+begin_src emacs-lisp
+(use-package olivetti
+  :straight t
+  :config
+  (setq olivetti-body-width 80))
+#+end_src
+
+** Nano
+
+Setup for the Nano package by Nicolas Rougier.
+
+#+begin_src emacs-lisp
+(setq nano-font-family-monospace "Roboto Mono")
+(setq nano-font-family-proportional "HK Grotesk")
+
+(use-package nano
+  :straight (:host github :repo "rougier/nano-emacs"))
+#+end_src
+
+** Org Mode
+
+Various cosmetic settings for org-mode.
+
+#+begin_src emacs-lisp
+(defun efs/org-font-setup ()
+  ;; Replace list hyphen with dot
+  (setq org-list-demote-modify-bullet '(("-" . "·") ("+" . "+")))
+
+  ;; Set faces for heading levels
+  (dolist (face '((org-level-1 . 2.0)
+                  (org-level-2 . 1.75)
+                  (org-level-3 . 1.5)
+                  (org-level-4 . 1.25)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.0)
+                  (org-level-7 . 1.0)
+                  (org-level-8 . 1.0)))
+    (set-face-attribute (car face) nil :font nano-font-family-proportional :weight 'bold :height (cdr face)))
+  
+  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (progn
+              ;Configure org-mode to move up and down visual lines instead of logical lines.
+              (setq-local line-move-visual t)
+              (evil-define-key 'motion evil-motion-state-map
+              (kbd "<up>") 'evil-previous-visual-line
+              (kbd "<down>") 'evil-next-visual-line)
+              (olivetti-mode)
+              (visual-line-mode)
+              (toggle-word-wrap))))
+#+end_src
+
+** Org Bullets
+
+Setup for org-bullets package.
+
+#+begin_src emacs-lisp
+(use-package org-bullets
+  :straight t
+  :hook (org-mode . org-bullets-mode)
+  :config
+  (setq org-bullets-bullet-list '("↳")))
+#+end_src
+
+** UI Improvements
+
+Miscellaneous UI improvements and settings.
+
+#+begin_src emacs-lisp
+(when (memq window-system '(mac ns))
+  (add-to-list 'default-frame-alist '(ns-appearance . light)) ;; for light theme
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t)))
+
+(setq inhibit-startup-screen t)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(set-fringe-mode 10)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+(setq visible-bell t)
+(setq ring-bell-function 'ignore)
+
+;; Display line numbers
+(if (version<= "26.0.50" emacs-version )
+    (progn
+      (global-display-line-numbers-mode)))
+#+end_src

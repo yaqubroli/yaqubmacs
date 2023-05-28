@@ -1,0 +1,127 @@
+* Core Settings
+
+This file contains all core settings for Emacs that are not specifically cosmetic.
+
+** Bootstrapping Straight.el
+
+The latest version of the bootstrap code for straight.el is automatically retrieved and evaluated. 
+
+#+begin_src emacs-lisp
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 6))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+(setq straight-use-package-by-default t)
+#+end_src
+
+** Use-Package Configuration
+
+Ensure use-package is installed with straight.el and use it by default.
+
+#+begin_src emacs-lisp
+(straight-use-package 'use-package)
+(setq straight-use-package-by-default t)
+#+end_src
+
+** Which-Key
+
+Setup for the which-key package.
+
+#+begin_src emacs-lisp
+(use-package which-key
+  :straight t
+  :config
+  (which-key-mode))
+#+end_src
+
+** Evil
+
+Setup for the Evil package.
+
+#+begin_src emacs-lisp
+(use-package evil
+  :config
+  (evil-mode 1))
+#+end_src
+
+** Ivy
+
+Setup for the Ivy package.
+
+#+begin_src emacs-lisp
+(use-package ivy
+  :config
+  (ivy-mode 1)
+  (setq ivy-use-virtual-buffers t)
+  (setq enable-recursive-minibuffers t))
+#+end_src
+
+** Browse Kill Ring
+
+Setup for the browse-kill-ring package.
+
+#+begin_src emacs-lisp
+(use-package browse-kill-ring
+  :config
+  (browse-kill-ring-default-keybindings))
+#+end_src
+
+** Rainbow Delimiters
+
+Setup for the rainbow-delimiters package.
+
+#+begin_src emacs-lisp
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+#+end_src
+
+** Counsel
+
+Setup for the Counsel package.
+
+#+begin_src emacs-lisp
+(use-package counsel
+  :bind (("M-x" . counsel-M-x)
+         ("C-x C-f" . counsel-find-file)
+         ("C-c f" . counsel-describe-function)
+         ("C-c v" . counsel-describe-variable)
+         ("C-c l" . counsel-find-library)
+         ("C-c i" . counsel-info-lookup-symbol)
+         ("C-c u" . counsel-unicode-char)
+         ("C-c g" . counsel-git)
+         ("C-c j" . counsel-git-grep)
+         ("C-c k" . counsel-ag)
+         ("C-x l" . counsel-locate)
+         :map minibuffer-local-map
+         ("C-r" . 'counsel-minibuffer-history)))
+#+end_src
+
+** GPT-EL
+
+Setup for the GPT-EL package.
+
+#+begin_src emacs-lisp
+(use-package gptel
+  :straight t
+  :config
+  (setq gptel-default-mode 'org-mode)
+#+end_src
+
+** Org Roam
+
+Setup for the Org Roam package.
+
+#+begin_src emacs-lisp
+(use-package org-roam
+  :straight t
+  :custom
+  (org-roam-directory (file-truename "~/org")))
+#+end_src
