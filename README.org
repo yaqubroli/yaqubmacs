@@ -2,17 +2,19 @@
 Currently very barebones, but contains some specific homegrown functions for doing macOS specific keychain stuff that I might spin off into a seperate package one day.
 
 Files by role:
-- [[file+emacs:./init.org][init.org]] init, contains all settings. tangles to ~~/.emacs.d/init.el~.
-- [[file+emacs:./gnus.org][gnus.org]] email config, tangles to ~~/gnus.el~
+- [[file+emacs:./init.org][init.org]] / init, contains all settings. tangles to ~~/.emacs.d/init.el~.
+- [[file+emacs:./gnus.org][gnus.org]] / email config, tangles to ~~/gnus.el~
 
 ** Save changes
 
 Eval this elisp code to tangle everything to its proper place.
 
 #+begin_src emacs-lisp
-  (let ((default-directory "/path/to/your/org/files/"))
-    (dolist (org-file (directory-files default-directory t "\\.org$"))
-      (with-current-buffer (find-file-noselect org-file)
-        (when (string-match-p "tangle:" (buffer-string))
+  (dolist (file (directory-files "." t "\\.org$"))
+    (with-current-buffer (find-file-noselect file)
+      (let ((tangle-file (org-entry-get nil "tangle")))
+        (when tangle-file
           (org-babel-tangle)))))
 #+end_src
+
+

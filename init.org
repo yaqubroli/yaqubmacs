@@ -325,7 +325,7 @@ Company mode is a text completion framework.
     (global-company-mode))
 #+end_src
 
-** Setup Company-box
+*** Setup Company-box
 Company-box is a frontend for company-mode, it provides a dropdown menu interface for completions.
 
 #+begin_src emacs-lisp
@@ -333,7 +333,14 @@ Company-box is a frontend for company-mode, it provides a dropdown menu interfac
     :straight t
     :hook (company-mode . company-box-mode))
 #+end_src
+** Magit
+Magit is an interface to the version control system Git, implemented as an Emacs package. It aspires to be a complete Git porcelain.
 
+#+begin_src emacs-lisp
+(use-package magit
+  :straight t
+  :bind (("C-x g" . magit-status)))
+#+end_src
 * Writing
 This section is about setting up tools to help us write prose more efficiently.
 
