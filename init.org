@@ -489,3 +489,35 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.plist\\'" . xml-mode))
 #+end_src 
+
+* AI Tools
+Currently, this is in a later part of the config because of my ~ns-keychain~ functions that I'm using for the username and password(s) and API keys and stuff. Dunno if this is the best idea.
+** Github Copilot
+A lot of the functions here are stolen and very-slightly-modified from Robert Krahn's [[https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup][blog post]] on setting up Copilot in emacs.
+
+#+begin_src emacs-lisp
+  (use-package copilot
+    :straight (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
+    :ensure t
+    :config
+    (define-key copilot-mode-map (kbd "C-s-<next>") #'copilot-next-completion)
+    (define-key copilot-mode-map (kbd "C-s-<prior>") #'copilot-previous-completion)
+    (define-key copilot-mode-map (kbd "C-s-<right>") #'copilot-accept-completion-by-word)
+    (define-key copilot-mode-map (kbd "C-s-<down>") #'copilot-accept-completion-by-line)
+    (define-key global-map (kbd "C-s-<return>") #'yaqub/copilot-complete-or-accept)
+    :hook (prog-mode . copilot-mode))
+
+  (defun yaqub/copilot-complete-or-accept ()
+    "Command that either triggers a completion or accepts one if one
+  is available. Useful if you tend to hammer your keys like I do."
+    (interactive)
+    ;; Turn on copilot-mode if it's not already active
+    (unless (bound-and-true-p copilot-mode)
+      (copilot-mode 1))
+    (if (copilot--overlay-visible)
+        (progn
+          (copilot-accept-completion)
+          (open-line 1)
+          (next-line))
+      (copilot-complete)))
+#+end_src
