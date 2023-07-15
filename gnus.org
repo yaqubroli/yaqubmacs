@@ -1,0 +1,54 @@
+#+PROPERTY: header-args ~/.gnus.el
+
+* Gnus Configuration
+In this org file, I configure the gnus email client to work with both of my email addresses. Instead of using an ~authinfo~ file, I use the ~ns-keychain~ functions I declared in my ~init.el~.
+
+** IMAP Configuration
+
+IMAP configuration for reading mails.
+
+#+BEGIN_SRC emacs-lisp :tangle "~/.gnus.el"
+
+(setq gnus-select-method
+      '(nnimap "icloud"
+               (nnimap-address "imap.mail.me.com")
+               (nnimap-server-port 993)
+               (nnimap-stream ssl)
+               (nnir-search-engine imap)
+               (nnimap-authinfo (quote (user "walchuk2018@icloud.com"
+                                             password (ns-keychain-get-internet-password "imap.mail.me.com" "walchuk2018@icloud.com"))))))
+
+(setq gnus-secondary-select-methods
+      '((nnimap "standrews"
+                (nnimap-address "outlook.office365.com")
+                (nnimap-server-port 993)
+                (nnimap-stream ssl)
+                (nnir-search-engine imap)
+                (nnimap-authinfo (quote (user "jpw24@st-andrews.ac.uk"
+                                              password (ns-keychain-get-internet-password "outlook.office365.com" "jpw24@st-andrews.ac.uk")))))))
+
+#+END_SRC
+
+** SMTP Configuration
+
+SMTP configuration for sending mails.
+
+#+BEGIN_SRC emacs-lisp :tangle "~/.gnus.el"
+
+(require 'smtpmail-multi)
+
+(setq smtpmail-multi-accounts
+      '((icloud-smtp ("smtp.mail.me.com" 587 "walchuk2018@icloud.com" 
+                      (ns-keychain-get-internet-password "smtp.mail.me.com" "walchuk2018@icloud.com")))
+        (standrews-smtp ("smtp.office365.com" 587 "jpw24@st-andrews.ac.uk" 
+                         (ns-keychain-get-internet-password "smtp.office365.com" "jpw24@st-andrews.ac.uk")))))
+
+(setq smtpmail-multi-associations
+      '(("walchuk2018@icloud.com" icloud-smtp)
+        ("jpw24@st-andrews.ac.uk" standrews-smtp)))
+
+(setq smtpmail-multi-default-account 'icloud-smtp
+      message-send-mail-function 'smtpmail-multi-send-it
+      smtpmail-debug-info t)
+
+#+END_SRC

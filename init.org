@@ -1,0 +1,484 @@
+#+PROPERTY: header-args :tangle /Users/yaqub/.emacs.d/init.el
+* Bootstrap
+This section is about setting up straight.el and use-package, which we'll use to manage packages.
+
+** Bootstrap Straight and use-package
+#+begin_src emacs-lisp
+  (let ((bootstrap-file
+         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+        (bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
+
+  (straight-use-package 'use-package)
+  (setq straight-use-package-by-default t)
+#+end_src
+
+*** Bind-key
+
+Need this to work in order to bind keys to packages I install.
+
+#+begin_src emacs-lisp
+(use-package bind-key
+  :straight t)
+#+end_src
+
+
+
+* File backups
+Backup files in a hidden ~.saves~ directory, so they don't cloud up ~ls~
+#+begin_src emacs-lisp
+  (setq backup-directory-alist `(("." . "~/.saves")))
+  (setq backup-by-copying t)
+#+end_src
+* User Interface
+This section deals with the aesthetic aspects of our Emacs setup.
+
+** Define fonts
+#+begin_src emacs-lisp
+  (setq yaqub/font-monospace "Inconsolata")
+  (setq yaqub/font-variable-serif "CMU Serif")
+  (setq yaqub/font-variable-sans "CMU Bright")
+  
+  ;; Ok, now define fonts on emacs' end
+  (set-face-attribute 'default nil :font yaqub/font-monospace :height 180)
+  (set-face-attribute 'variable-pitch nil :font yaqub/font-variable-serif :inherit 'default) 
+#+end_src
+
+** UI Changes
+#+begin_src emacs-lisp
+  (menu-bar-mode -1)
+  (toggle-scroll-bar -1)
+  (tool-bar-mode -1)
+  (set-frame-font
+   (format "%s-%d" yaqub/font-monospace 18)
+   nil t)
+#+end_src
+
+We can also do a transparent title bar on macOS:
+
+#+begin_src emacs-lisp
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+  (add-to-list 'default-frame-alist '(ns-appearance . dark))
+#+end_src
+
+** Install and Enable atom-one-dark
+#+begin_src emacs-lisp
+  (use-package atom-one-dark-theme
+    :straight t
+    :config
+    (load-theme 'atom-one-dark t))
+#+end_src
+
+** Setup all-the-icons
+All-the-icons is a package to use icons in your Emacs.
+
+#+begin_src emacs-lisp
+  (use-package all-the-icons
+    :straight (all-the-icons :type git :host github :repo "domtronn/all-the-icons.el" :branch "svg" :files (:defaults "svg"))
+    :if (display-graphic-p))
+#+end_src
+
+We can also configure all-the-icons to be used with dired
+
+#+begin_src emacs-lisp
+  (use-package all-the-icons-dired
+    :straight (all-the-icons-dired
+  	     :type git
+  	     :host github
+  	     :repo "jtbm37/all-the-icons-dired")
+    :config
+    (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
+#+end_src
+
+** Setup modeline
+*** Moody
+Moody is a package for creating attractive mode-lines.
+
+#+begin_src emacs-lisp
+(use-package moody
+  :straight t
+  :config
+  (setq x-underline-at-descent-line t)
+  (moody-replace-mode-line-buffer-identification)
+  (moody-replace-vc-mode))
+#+end_src
+
+*** Minions
+Minions is a package for managing and organizing minor-mode lighters in the mode-line.
+
+#+begin_src emacs-lisp
+(use-package minions
+  :straight t
+  :config
+  (setq minions-mode-line-lighter "M")
+  (setq minions-mode-line-delimiters '("" . ""))
+  (minions-mode 1))
+#+end_src
+* Navigation
+This section is about setting up tools that help us navigate our buffers and files more efficiently.
+
+** Setup Ivy and Counsel
+#+begin_src emacs-lisp
+  (use-package ivy
+    :straight t
+    :diminish
+    :bind (("C-s" . swiper)
+           :map ivy-minibuffer-map
+           ("TAB" . ivy-alt-done)
+           ("C-l" . ivy-alt-done)
+           ("C-j" . ivy-next-line)
+           ("C-k" . ivy-previous-line)
+           :map ivy-switch-buffer-map
+           ("C-k" . ivy-previous-line)
+           ("C-l" . ivy-done)
+           ("C-d" . ivy-switch-buffer-kill)
+           :map ivy-reverse-i-search-map
+           ("C-k" . ivy-previous-line)
+           ("C-d" . ivy-reverse-i-search-kill))
+    :config
+    (ivy-mode 1))
+
+  (use-package counsel
+    :straight t
+    :bind (("C-M-j" . 'counsel-switch-buffer)
+           :map minibuffer-local-map
+           ("C-r" . 'counsel-minibuffer-history))
+    :config
+    (counsel-mode 1))
+#+end_src
+
+** Which-Key
+Which-Key is a package that displays a popup listing the possible keys to complete a command, menu, etc.
+
+#+begin_src emacs-lisp
+(use-package which-key
+  :straight t
+  :init
+  (which-key-mode)
+  :config
+  ;; Reduce the delay before which-key popup appears
+  (setq which-key-idle-delay 0.3)
+  ;; Set the width of the which-key popup window
+  (setq which-key-side-window-max-width 0.33)
+  ;; Set the location of the which-key popup window to the bottom
+  (setq which-key-side-window-location 'bottom))
+#+end_src
+
+** Hydra
+Hydra is a package for creating beautiful "sticky" keybindings.
+
+*** Hydra for Gnus
+Here we define a Hydra for common Gnus commands.
+
+#+begin_src emacs-lisp
+(use-package hydra
+  :straight t
+  :init
+  (defhydra hydra-gnus (:color teal :hint nil)
+    "
+     ^Gnus^
+     ------
+     _g_: group   _b_: browse
+     _s_: summary _p_: post news
+     _q_: quit
+    "
+    ("g" gnus-group-list-all-groups)
+    ("b" gnus-group-browse-foreign-newsgroup)
+    ("s" gnus-summary-buffer)
+    ("p" gnus-group-post-news)
+    ("q" gnus-group-exit))
+  )
+#+end_src
+
+*** Hydra for Dired
+Here we define a Hydra for common Dired commands.
+
+#+begin_src emacs-lisp
+(defhydra hydra-dired (:color teal :hint nil)
+  "
+   ^Dired^
+   ------
+   _c_: copy   _d_: delete
+   _r_: rename _m_: chmod (change permissions)
+   _o_: chown  _g_: refresh
+   _s_: sort   _q_: quit
+  "
+  ("c" dired-do-copy)
+  ("d" dired-do-delete)
+  ("r" dired-do-rename)
+  ("m" dired-do-chmod)
+  ("o" dired-do-chown)
+  ("g" revert-buffer)
+  ("s" dired-sort-toggle-or-edit)
+  ("q" quit-window :exit t))
+#+end_src
+
+*** Context-dependent Hydra activation
+Here we bind the "s-h" key to activate the right Hydra depending on the current mode.
+
+#+begin_src emacs-lisp
+  (global-set-key (kbd "s-h") (lambda ()
+                                (interactive)
+                                (cond ((eq major-mode 'gnus-group-mode)
+                                       (hydra-gnus/body))
+                                      ((eq major-mode 'dired-mode)
+                                       (hydra-dired/body))
+  				    ((eq major-mode 'dired-sidebar-mode)
+  				     (hydra-dired/body))
+                                      (t
+                                       (message "No hydra available for this mode")))))
+#+end_src
+
+*** Setup Evil-mode
+Evil-mode provides Vim keybindings in Emacs.
+
+#+begin_src emacs-lisp
+  (use-package evil
+    :straight t
+    :init
+    (setq evil-want-integration t)
+    (setq evil-want-keybinding nil)
+    (setq evil-want-C-u-scroll t)
+    :config
+    (evil-mode 1))
+  (use-package evil-collection
+    :straight t
+    :after evil
+    :config
+    (evil-collection-init))
+#+end_src
+**** Multiple cursors in evil-mode
+#+begin_src emacs-lisp
+  (use-package evil-mc
+    :straight t
+    :config
+    (global-evil-mc-mode 1))
+#+end_src
+
+*** Dired hacks
+
+**** Dired subtree
+
+#+begin_src emacs-lisp
+  (use-package dired-subtree
+    :straight t
+    :bind (:map dired-mode-map
+           ("C-, i" . dired-subtree-insert)
+           ("C-, r" . dired-subtree-remove)
+           ("C-, t" . dired-subtree-toggle)
+           ("C-, c" . dired-subtree-cycle)
+           ("C-, v" . dired-subtree-revert)
+           ("C-, n" . dired-subtree-narrow)
+           ("C-, u" . dired-subtree-up)
+           ("C-, d" . dired-subtree-down)
+           ("C-, s" . dired-subtree-next-sibling)
+           ("C-, p" . dired-subtree-previous-sibling)
+           ("C-, b" . dired-subtree-beginning)
+           ("C-, e" . dired-subtree-end)
+           ("C-, m" . dired-subtree-mark-subtree)
+           ("C-, u" . dired-subtree-unmark-subtree)
+           ("C-, f" . dired-subtree-only-this-file)
+           ("C-, o" . dired-subtree-only-this-directory)))
+#+end_src
+
+**** Dired sidebar (gives Atom/vscode-like sidebar, but leveraging emacs functionality)
+
+#+begin_src emacs-lisp
+  (use-package dired-sidebar
+    :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
+    :ensure t
+    :commands (dired-sidebar-toggle-sidebar))
+#+end_src
+
+* Coding
+This section is about setting up tools to help us write code more efficiently.
+
+** Enable line numbers in prog-mode
+#+begin_src emacs-lisp
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+#+end_src
+
+** Setup Yasnippet
+Yasnippet is a template system for Emacs.
+
+#+begin_src emacs-lisp
+  (use-package yasnippet
+    :straight t
+    :init
+    (yas-global-mode 1))
+#+end_src
+
+** Setup Company-mode
+Company mode is a text completion framework.
+
+#+begin_src emacs-lisp
+  (use-package company
+    :straight t
+    :init
+    (global-company-mode))
+#+end_src
+
+** Setup Company-box
+Company-box is a frontend for company-mode, it provides a dropdown menu interface for completions.
+
+#+begin_src emacs-lisp
+  (use-package company-box
+    :straight t
+    :hook (company-mode . company-box-mode))
+#+end_src
+
+* Writing
+This section is about setting up tools to help us write prose more efficiently.
+
+** Setup Org
+Here, we separate the org setup into its own function for clarity.
+
+#+begin_src emacs-lisp
+  (defun yaqub/org-font-setup ()
+    ;; These are the sizes I want.
+    (let ((org-level-font-scale '(
+  			  (1 . 1.5)
+  			  (2 . 1.375)
+  			  (3 . 1.25)
+  			  (4 . 1.125)
+  			  (5 . 1.0)
+  			  (6 . 1.0)
+  			  (7 . 1.0)
+  			  (8 . 1.0)
+  			  )))
+      ;; Iterate through all the org levels, and make them the same colour as 'default.
+      (dolist (level (number-sequence 1 8))
+  	     (let* ((org-level-face (intern (format "org-level-%d" level)))
+  	            (org-level-size (cdr (assoc level org-level-font-scale))))
+  	     (when org-level-size
+  	       (set-face-attribute org-level-face nil
+  				   :font yaqub/font-variable-serif
+  				   :foreground (face-attribute 'default :foreground)
+  				   :weight 'bold
+  				   :height org-level-size)))))
+    
+    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+    (set-face-attribute 'org-code nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-table nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-verbatim nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-block nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-block-begin-line nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-block-end-line nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch)))
+
+  (use-package org
+    :straight t
+    :config
+    (yaqub/org-font-setup)
+    (add-hook 'org-mode-hook 'variable-pitch-mode)
+    (setq org-hide-emphasis-markers t)
+    (setq org-startup-indented t))
+#+end_src
+
+*** Org-modern
+Setting up /org-modern/, which uses unicode tricks to make org look nicer
+
+#+begin_src emacs-lisp
+  (use-package org-modern
+    :straight t
+    :config
+    (global-org-modern-mode))
+#+end_src
+
+#+RESULTS:
+: t
+
+*** Setup Olivetti-mode for Org
+We'll enable olivetti mode whenever we enter org mode.
+
+#+begin_src emacs-lisp
+  (use-package olivetti
+    :straight t
+    :hook (org-mode . olivetti-mode))
+#+end_src
+
+*** Org-roam
+
+Very important.
+#+begin_src emacs-lisp
+  (use-package org-roam
+    :straight t
+    :hook 
+    (after-init . org-roam-mode)
+    :custom
+    (org-roam-directory "~/Orgfiles/roam")
+    :bind (("C-c n f" . org-roam-node-find)
+           ("C-c n i" . org-roam-node-insert)
+           ("C-c n g" . org-roam-graph)
+           ("C-c n c" . org-roam-capture)
+           ("C-c n d" . org-roam-dailies-capture-today)))
+#+end_src
+
+
+* Email
+** Gnus
+#+BEGIN_SRC emacs-lisp
+(use-package gnus
+  :straight t
+  :config
+  (load "~/.gnus.el"))
+#+END_SRC
+
+** smtpmail-multi
+#+BEGIN_SRC emacs-lisp
+(use-package smtpmail-multi
+  :straight t)
+#+END_SRC
+
+* macOS related things
+** Getting passwords from macOS keychain
+Here, I'm declaring two new functions that use Apple's ~security~ command to access passwords in the macOS keychain. I can add Keychain entries with [[elisp:(shell-command "open '/System/Applications/Utilities/Keychain Access.app'")][Keychain Access]].
+
+#+begin_src emacs-lisp 
+
+(defun ns-keychain-get-generic-password (service account)
+  (let ((output (shell-command-to-string
+                 (format "security find-generic-password -s %s -a %s -w"
+                         (shell-quote-argument service)
+                         (shell-quote-argument account)))))
+    (substring output 0 (string-match "\n\\'" output))))
+
+(defun ns-keychain-get-internet-password (server account)
+  (let ((output (shell-command-to-string
+                 (format "security find-internet-password -s %s -a %s -w"
+                         (shell-quote-argument server)
+                         (shell-quote-argument account)))))
+    (substring output 0 (string-match "\n\\'" output))))
+                        
+#+end_src
+** Property lists
+OSX Plist is a library for reading and writing property lists (`.plist` files) as used in OS X.
+
+#+begin_src emacs-lisp
+  (use-package osx-plist
+    :straight (:host github :repo "gonewest818/osx-plist"))
+#+end_src
+
+In addition, emacs should recognize everything that ends in *.plist as XML and do syntax highlighting / company suggestions / etc appropriately.
+
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.plist\\'" . xml-mode))
+#+end_src 
