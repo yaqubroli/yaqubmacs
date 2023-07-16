@@ -439,22 +439,52 @@ Very important.
            ("C-c n d" . org-roam-dailies-capture-today)))
 #+end_src
 
+*** "get orgfiles by tag" function
 
-* Email
-** Gnus
-#+BEGIN_SRC emacs-lisp
-(use-package gnus
+With this function and the other setup, any orgfiles tagged with ~dashboard~ will be included in the dashboard, and any files tagged with ~agenda~ will be included in the agenda.
+
+#+begin_src emacs-lisp
+  (defun yaqub/get-org-files-by-tag (dir tag)
+    "Get list of all org files in DIR that contain TAG."
+    (let ((org-files (directory-files-recursively dir "\.org$"))
+          matching-files)
+      (dolist (file org-files)
+        (with-temp-buffer
+          (insert-file-contents file)
+          (goto-char (point-min))
+          (when (search-forward (concat ":" tag ":") nil t)
+            (push file matching-files))))
+      matching-files))
+#+end_src
+*** Org-agenda
+Set up the org-agenda to show files with the "agenda" tag.
+
+#+begin_src emacs-lisp
+(defun yaqub/update-org-agenda-files ()
+  "Update the org-agenda files list."
+  (setq org-agenda-files (yaqub/get-org-files-by-tag "~/Orgfiles" "agenda")))
+
+(yaqub/update-org-agenda-files)
+#+end_src
+*** Org-dashboard
+#+begin_src emacs-lisp
+(use-package org-dashboard
   :straight t
   :config
-  (load "~/.gnus.el"))
-#+END_SRC
+  (defun yaqub/update-org-dashboard-files ()
+    "Update the org-dashboard files list."
+    (setq org-dashboard-files (yaqub/get-org-files-by-tag "~/Orgfiles" "dashboard")))
 
-** smtpmail-multi
-#+BEGIN_SRC emacs-lisp
-(use-package smtpmail-multi
-  :straight t)
-#+END_SRC
+  (yaqub/update-org-dashboard-files))
 
+(defun yaqub/org-file-save-hook ()
+  "Update the org-dashboard and org-agenda files list when saving an Org file."
+  (when (and (eq major-mode 'org-mode) (string-prefix-p "~/Orgfiles/" (buffer-file-name)))
+    (yaqub/update-org-dashboard-files)
+    (yaqub/update-org-agenda-files)))
+
+(add-hook 'after-save-hook 'yaqub/org-file-save-hook)
+#+end_src
 * macOS related things
 ** Getting passwords from macOS keychain
 Here, I'm declaring two new functions that use Apple's ~security~ command to access passwords in the macOS keychain. I can add Keychain entries with [[elisp:(shell-command "open '/System/Applications/Utilities/Keychain Access.app'")][Keychain Access]].
@@ -490,6 +520,19 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
   (add-to-list 'auto-mode-alist '("\\.plist\\'" . xml-mode))
 #+end_src 
 
+* Email
+** smtpmail-multi
+#+BEGIN_SRC emacs-lisp
+(use-package smtpmail-multi
+  :straight t)
+#+END_SRC
+** Gnus
+#+BEGIN_SRC emacs-lisp
+(use-package gnus
+  :straight t
+  :config
+  (load "~/.gnus.el"))
+#+END_SRC
 * AI Tools
 Currently, this is in a later part of the config because of my ~ns-keychain~ functions that I'm using for the username and password(s) and API keys and stuff. Dunno if this is the best idea.
 ** Github Copilot
