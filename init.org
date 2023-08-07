@@ -491,7 +491,6 @@ Using nov.el for epub reading
     :straight t
     :mode ("\\.epub\\'" . nov-mode)
     :config
-    ;; Customize any `nov` related settings here if needed
     )
 #+end_src
 *** Use webkit with /nov-xwidget/
@@ -505,14 +504,22 @@ Render books in Tim Applevision instead of Stallmanvision.
     (define-key nov-mode-map (kbd "o") 'nov-xwidget-view)
     (add-hook 'nov-mode-hook 'nov-xwidget-inject-all-files))
 #+end_src
-** Integrate with Calibre
+*** Integrate with Calibre
 Use calibre db with nov.el.
 #+begin_src emacs-lisp
   (use-package calibredb
     :defer t
     :config
     (setq calibredb-root-dir "~/Books")
-    (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir)))
+    (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir))
+
+    ;; Disable evil-mode keybindings in calibredb-search
+    (defun disable-evil-in-calibredb-search ()
+      "Switch to `emacs` state if the major mode is `calibredb-search`."
+      (when (eq major-mode 'calibredb-search-mode)
+        (evil-emacs-state)))
+
+    (add-hook 'calibredb-search-mode-hook 'disable-evil-in-calibredb-search))
 #+end_src
 * macOS related things
 ** Getting passwords from macOS keychain
