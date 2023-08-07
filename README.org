@@ -15,7 +15,6 @@ Eval this elisp code to tangle everything to its proper place.
       (let ((tangle-file (org-entry-get nil "tangle")))
         (when tangle-file
           (org-babel-tangle)))))
+  (load-file "~/.emacs.d/init.el")
 #+end_src
-
-
 

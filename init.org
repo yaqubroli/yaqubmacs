@@ -29,8 +29,6 @@ Need this to work in order to bind keys to packages I install.
   :straight t)
 #+end_src
 
-
-
 * File backups
 Backup files in a hidden ~.saves~ directory, so they don't cloud up ~ls~
 #+begin_src emacs-lisp
@@ -484,6 +482,37 @@ Set up the org-agenda to show files with the "agenda" tag.
     (yaqub/update-org-agenda-files)))
 
 (add-hook 'after-save-hook 'yaqub/org-file-save-hook)
+#+end_src
+* Reading
+** /nov.el/ support
+Using nov.el for epub reading
+#+begin_src emacs-lisp
+  (use-package nov
+    :straight t
+    :mode ("\\.epub\\'" . nov-mode)
+    :config
+    ;; Customize any `nov` related settings here if needed
+    )
+#+end_src
+*** Use webkit with /nov-xwidget/
+Render books in Tim Applevision instead of Stallmanvision.
+#+begin_src emacs-lisp
+  (use-package nov-xwidget
+    :straight (:host github :repo "chenyanming/nov-xwidget")
+    :demand t
+    :after nov
+    :config
+    (define-key nov-mode-map (kbd "o") 'nov-xwidget-view)
+    (add-hook 'nov-mode-hook 'nov-xwidget-inject-all-files))
+#+end_src
+** Integrate with Calibre
+Use calibre db with nov.el.
+#+begin_src emacs-lisp
+  (use-package calibredb
+    :defer t
+    :config
+    (setq calibredb-root-dir "~/Books")
+    (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir)))
 #+end_src
 * macOS related things
 ** Getting passwords from macOS keychain
