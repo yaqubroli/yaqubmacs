@@ -1,4 +1,5 @@
 #+PROPERTY: header-args :tangle /Users/yaqub/.emacs.d/init.el
+#+PROPERTY: header-args :tangle /Users/yaqub/.emacs.d/init.el
 * Bootstrap
 This section is about setting up straight.el and use-package, which we'll use to manage packages.
 
@@ -20,7 +21,8 @@ This section is about setting up straight.el and use-package, which we'll use to
   (setq straight-use-package-by-default t)
 #+end_src
 
-*** Bind-key
+* Basics
+** Bind-key
 
 Need this to work in order to bind keys to packages I install.
 
@@ -28,16 +30,18 @@ Need this to work in order to bind keys to packages I install.
 (use-package bind-key
   :straight t)
 #+end_src
-
-* File backups
+** Silence the bell
+#+begin_src emacs-lisp 
+  (setq ring-bell-function 'ignore)
+#+end_src
+** File Backups
 Backup files in a hidden ~.saves~ directory, so they don't cloud up ~ls~
 #+begin_src emacs-lisp
   (setq backup-directory-alist `(("." . "~/.saves")))
   (setq backup-by-copying t)
 #+end_src
-* User Interface
+* Aesthetics
 This section deals with the aesthetic aspects of our Emacs setup.
-
 ** Define fonts
 #+begin_src emacs-lisp
   (setq yaqub/font-monospace "Inconsolata")
@@ -121,7 +125,6 @@ Minions is a package for managing and organizing minor-mode lighters in the mode
 #+end_src
 * Navigation
 This section is about setting up tools that help us navigate our buffers and files more efficiently.
-
 ** Setup Ivy and Counsel
 #+begin_src emacs-lisp
   (use-package ivy
@@ -169,72 +172,7 @@ Which-Key is a package that displays a popup listing the possible keys to comple
   (setq which-key-side-window-location 'bottom))
 #+end_src
 
-** Hydra
-Hydra is a package for creating beautiful "sticky" keybindings.
-
-*** Hydra for Gnus
-Here we define a Hydra for common Gnus commands.
-
-#+begin_src emacs-lisp
-(use-package hydra
-  :straight t
-  :init
-  (defhydra hydra-gnus (:color teal :hint nil)
-    "
-     ^Gnus^
-     ------
-     _g_: group   _b_: browse
-     _s_: summary _p_: post news
-     _q_: quit
-    "
-    ("g" gnus-group-list-all-groups)
-    ("b" gnus-group-browse-foreign-newsgroup)
-    ("s" gnus-summary-buffer)
-    ("p" gnus-group-post-news)
-    ("q" gnus-group-exit))
-  )
-#+end_src
-
-*** Hydra for Dired
-Here we define a Hydra for common Dired commands.
-
-#+begin_src emacs-lisp
-(defhydra hydra-dired (:color teal :hint nil)
-  "
-   ^Dired^
-   ------
-   _c_: copy   _d_: delete
-   _r_: rename _m_: chmod (change permissions)
-   _o_: chown  _g_: refresh
-   _s_: sort   _q_: quit
-  "
-  ("c" dired-do-copy)
-  ("d" dired-do-delete)
-  ("r" dired-do-rename)
-  ("m" dired-do-chmod)
-  ("o" dired-do-chown)
-  ("g" revert-buffer)
-  ("s" dired-sort-toggle-or-edit)
-  ("q" quit-window :exit t))
-#+end_src
-
-*** Context-dependent Hydra activation
-Here we bind the "s-h" key to activate the right Hydra depending on the current mode.
-
-#+begin_src emacs-lisp
-  (global-set-key (kbd "s-h") (lambda ()
-                                (interactive)
-                                (cond ((eq major-mode 'gnus-group-mode)
-                                       (hydra-gnus/body))
-                                      ((eq major-mode 'dired-mode)
-                                       (hydra-dired/body))
-  				    ((eq major-mode 'dired-sidebar-mode)
-  				     (hydra-dired/body))
-                                      (t
-                                       (message "No hydra available for this mode")))))
-#+end_src
-
-*** Setup Evil-mode
+** Setup Evil-mode
 Evil-mode provides Vim keybindings in Emacs.
 
 #+begin_src emacs-lisp
@@ -260,10 +198,8 @@ Evil-mode provides Vim keybindings in Emacs.
     (global-evil-mc-mode 1))
 #+end_src
 
-*** Dired hacks
-
-**** Dired subtree
-
+** Dired hacks
+*** Dired subtree
 #+begin_src emacs-lisp
   (use-package dired-subtree
     :straight t
@@ -286,7 +222,7 @@ Evil-mode provides Vim keybindings in Emacs.
            ("C-, o" . dired-subtree-only-this-directory)))
 #+end_src
 
-**** Dired sidebar (gives Atom/vscode-like sidebar, but leveraging emacs functionality)
+*** Dired sidebar (gives Atom/vscode-like sidebar, but leveraging emacs functionality)
 
 #+begin_src emacs-lisp
   (use-package dired-sidebar
@@ -340,8 +276,7 @@ Magit is an interface to the version control system Git, implemented as an Emacs
   :bind (("C-x g" . magit-status)))
 #+end_src
 * Writing
-This section is about setting up tools to help us write prose more efficiently.
-
+This section is about setting up tools to help us write prose more efficiently; mostly org config.
 ** Setup Org
 Here, we separate the org setup into its own function for clarity.
 
@@ -484,6 +419,7 @@ Set up the org-agenda to show files with the "agenda" tag.
 (add-hook 'after-save-hook 'yaqub/org-file-save-hook)
 #+end_src
 * Reading
+** Better web browsing with /xwwp/
 ** /nov.el/ support
 Using nov.el for epub reading
 #+begin_src emacs-lisp
@@ -493,7 +429,7 @@ Using nov.el for epub reading
     :config
     )
 #+end_src
-*** Use webkit with /nov-xwidget/
+** Use webkit with /nov-xwidget/
 Render books in Tim Applevision instead of Stallmanvision.
 #+begin_src emacs-lisp
   (use-package nov-xwidget
@@ -504,43 +440,24 @@ Render books in Tim Applevision instead of Stallmanvision.
     (define-key nov-mode-map (kbd "o") 'nov-xwidget-view)
     (add-hook 'nov-mode-hook 'nov-xwidget-inject-all-files))
 #+end_src
-*** Integrate with Calibre
-Use calibre db with nov.el.
+** Integrate with Calibre
+Use calibre db.
 #+begin_src emacs-lisp
   (use-package calibredb
     :defer t
     :config
     (setq calibredb-root-dir "~/Books")
     (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir))
-
-    ;; Disable evil-mode keybindings in calibredb-search
-    (defun disable-evil-in-calibredb-search ()
-      "Switch to `emacs` state if the major mode is `calibredb-search`."
-      (when (eq major-mode 'calibredb-search-mode)
-        (evil-emacs-state)))
-
-    (add-hook 'calibredb-search-mode-hook 'disable-evil-in-calibredb-search))
+    (evil-set-initial-state 'calibredb-search-mode 'emacs))
 #+end_src
-* macOS related things
+
+* macOS
 ** Getting passwords from macOS keychain
 Here, I'm declaring two new functions that use Apple's ~security~ command to access passwords in the macOS keychain. I can add Keychain entries with [[elisp:(shell-command "open '/System/Applications/Utilities/Keychain Access.app'")][Keychain Access]].
 
-#+begin_src emacs-lisp 
-
-(defun ns-keychain-get-generic-password (service account)
-  (let ((output (shell-command-to-string
-                 (format "security find-generic-password -s %s -a %s -w"
-                         (shell-quote-argument service)
-                         (shell-quote-argument account)))))
-    (substring output 0 (string-match "\n\\'" output))))
-
-(defun ns-keychain-get-internet-password (server account)
-  (let ((output (shell-command-to-string
-                 (format "security find-internet-password -s %s -a %s -w"
-                         (shell-quote-argument server)
-                         (shell-quote-argument account)))))
-    (substring output 0 (string-match "\n\\'" output))))
-                        
+#+begin_src emacs-lisp
+  (use-package ns-keychain
+    :straight (:host github :repo "yaqubroli/ns-keychain.el"))
 #+end_src
 ** Property lists
 OSX Plist is a library for reading and writing property lists (`.plist` files) as used in OS X.
@@ -599,4 +516,4 @@ A lot of the functions here are stolen and very-slightly-modified from Robert Kr
           (open-line 1)
           (next-line))
       (copilot-complete)))
-#+end_src
+#+end_src 
