@@ -1,5 +1,4 @@
 #+PROPERTY: header-args :tangle /Users/yaqub/.emacs.d/init.el
-#+PROPERTY: header-args :tangle /Users/yaqub/.emacs.d/init.el
 * Bootstrap
 This section is about setting up straight.el and use-package, which we'll use to manage packages.
 
@@ -426,8 +425,7 @@ Using nov.el for epub reading
   (use-package nov
     :straight t
     :mode ("\\.epub\\'" . nov-mode)
-    :config
-    )
+    :config)
 #+end_src
 ** Use webkit with /nov-xwidget/
 Render books in Tim Applevision instead of Stallmanvision.
@@ -488,6 +486,23 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
 #+END_SRC
 * AI Tools
 Currently, this is in a later part of the config because of my ~ns-keychain~ functions that I'm using for the username and password(s) and API keys and stuff. Dunno if this is the best idea.
+
+** OpenAI 
+This library is required for ChatGPT, DeepL etc to function
+#+begin_src emacs-lisp 
+  (use-package openai
+    :straight (openai :type git :host github :repo "emacs-openai/openai")
+    :config (setq openai-key (ns-keychain-get-generic-password "OpenAI" "walchuk2018@icloud.com")))
+  #+end_src
+*** ChatGPT
+#+begin_src emacs-lisp
+  (use-package chatgpt
+    :straight (chatgpt :type git :host github :repo "emacs-openai/chatgpt")
+    :config
+    (add-hook 'chatgpt-input-mode-hook (lambda () (evil-insert 1)))
+    (setq chatgpt-model "gpt-4")
+    (setq chatgpt-window-prompt ""))
+#+end_src
 ** Github Copilot
 A lot of the functions here are stolen and very-slightly-modified from Robert Krahn's [[https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup][blog post]] on setting up Copilot in emacs.
 
