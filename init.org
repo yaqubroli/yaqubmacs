@@ -274,6 +274,13 @@ Magit is an interface to the version control system Git, implemented as an Emacs
   :straight t
   :bind (("C-x g" . magit-status)))
 #+end_src
+** Javascript
+#+begin_src emacs-lisp 
+  (add-hook 'js-mode-hook
+  	  (lambda ()
+  	    (setq js-indent-level 2)
+  	    (setq indent-tabs-mode nil)))
+#+end_src
 * Writing
 This section is about setting up tools to help us write prose more efficiently; mostly org config.
 ** Setup Org
@@ -418,6 +425,15 @@ Set up the org-agenda to show files with the "agenda" tag.
 (add-hook 'after-save-hook 'yaqub/org-file-save-hook)
 #+end_src
 * Reading
+** PDF Tools
+#+begin_src emacs-lisp 
+  (use-package pdf-tools
+    :straight (pdf-tools :type git :host github :repo "vedang/pdf-tools")
+    :config
+    (setq-default pdf-view-display-size 'fit-page)
+    (setq pdf-view-resize-factor 1.1)
+    (setq pdf-view-use-scaling t))
+#+end_src
 ** Better web browsing with /xwwp/
 ** /nov.el/ support
 Using nov.el for epub reading

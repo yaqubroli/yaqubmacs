@@ -8,25 +8,23 @@ In this org file, I configure the gnus email client to work with both of my emai
 IMAP configuration for reading mails.
 
 #+BEGIN_SRC emacs-lisp :tangle "~/.gnus.el"
+  (setq gnus-select-method
+        '(nnimap "icloud"
+                 (nnimap-address "imap.mail.me.com")
+                 (nnimap-server-port 993)
+                 (nnimap-stream ssl)
+                 (nnir-search-engine imap)
+                 (nnimap-authinfo (quote (user "walchuk2018@icloud.com"
+                                               password (ns-keychain-get-internet-password "imap.mail.me.com" "walchuk2018@icloud.com"))))))
 
-(setq gnus-select-method
-      '(nnimap "icloud"
-               (nnimap-address "imap.mail.me.com")
-               (nnimap-server-port 993)
-               (nnimap-stream ssl)
-               (nnir-search-engine imap)
-               (nnimap-authinfo (quote (user "walchuk2018@icloud.com"
-                                             password (ns-keychain-get-internet-password "imap.mail.me.com" "walchuk2018@icloud.com"))))))
-
-(setq gnus-secondary-select-methods
-      '((nnimap "standrews"
-                (nnimap-address "outlook.office365.com")
-                (nnimap-server-port 993)
-                (nnimap-stream ssl)
-                (nnir-search-engine imap)
-                (nnimap-authinfo (quote (user "jpw24@st-andrews.ac.uk"
-                                              password (ns-keychain-get-internet-password "outlook.office365.com" "jpw24@st-andrews.ac.uk")))))))
-
+  (setq gnus-secondary-select-method
+        '((nnimap "standrews"
+                  (nnimap-address "outlook.office365.com")
+                  (nnimap-server-port 993)
+                  (nnimap-stream ssl)
+                  (nnir-search-engine imap)
+                  (nnimap-authinfo (quote (user "jpw24@st-andrews.ac.uk"
+                                                password (ns-keychain-get-internet-password "outlook.office365.com" "jpw24@st-andrews.ac.uk")))))))
 #+END_SRC
 
 ** SMTP Configuration
