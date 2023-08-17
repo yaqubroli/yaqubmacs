@@ -73,14 +73,13 @@ We can also do a transparent title bar on macOS:
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
   (add-to-list 'default-frame-alist '(ns-appearance . dark))
 #+end_src
-** Install and Enable atom-one-dark
+** Install and Enable angloid-theme
 #+begin_src emacs-lisp
-  (use-package atom-one-dark-theme
-    :straight t
+  (use-package angloid-theme
+    :straight (angloid-theme :type git :host github :repo "yaqubroli/angloid-theme")
     :config
-    (load-theme 'atom-one-dark t))
+    (load-theme 'angloid-light-theme t))
 #+end_src
-
 ** Setup all-the-icons
 All-the-icons is a package to use icons in your Emacs.
 
@@ -387,15 +386,6 @@ Very important.
     :straight t)
 #+end_src
 * Reading
-** PDF Tools
-#+begin_src emacs-lisp 
-  (use-package pdf-tools
-    :straight (pdf-tools :type git :host github :repo "vedang/pdf-tools")
-    :config
-    (setq-default pdf-view-display-size 'fit-page)
-    (setq pdf-view-resize-factor 1.1)
-    (setq pdf-view-use-scaling t))
-#+end_src
 ** Better web browsing with /xwwp/
 ** /nov.el/ support
 Using nov.el for epub reading
