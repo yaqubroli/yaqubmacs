@@ -29,6 +29,12 @@ Need this to work in order to bind keys to packages I install.
 (use-package bind-key
   :straight t)
 #+end_src
+** Mitsuharu keybindings
+Make mitsuharu keybindings behave like mainline emacs (so command is the super key)
+#+begin_src emacs-lisp
+  (setq mac-option-modifier 'meta)     ; Set option key as META
+  (setq mac-command-modifier 'super)   ; Set cmd key as SUPER
+#+end_src
 ** Silence the bell
 #+begin_src emacs-lisp 
   (setq ring-bell-function 'ignore)
@@ -43,7 +49,7 @@ Backup files in a hidden ~.saves~ directory, so they don't cloud up ~ls~
 This section deals with the aesthetic aspects of our Emacs setup.
 ** Define fonts
 #+begin_src emacs-lisp
-  (setq yaqub/font-monospace "Inconsolata")
+  (setq yaqub/font-monospace "CMU Typewriter Text")
   (setq yaqub/font-variable-serif "CMU Serif")
   (setq yaqub/font-variable-sans "CMU Bright")
   
@@ -51,7 +57,6 @@ This section deals with the aesthetic aspects of our Emacs setup.
   (set-face-attribute 'default nil :font yaqub/font-monospace :height 180)
   (set-face-attribute 'variable-pitch nil :font yaqub/font-variable-serif :inherit 'default) 
 #+end_src
-
 ** UI Changes
 #+begin_src emacs-lisp
   (menu-bar-mode -1)
@@ -68,7 +73,6 @@ We can also do a transparent title bar on macOS:
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
   (add-to-list 'default-frame-alist '(ns-appearance . dark))
 #+end_src
-
 ** Install and Enable atom-one-dark
 #+begin_src emacs-lisp
   (use-package atom-one-dark-theme
@@ -338,7 +342,6 @@ Here, we separate the org setup into its own function for clarity.
     (setq org-hide-emphasis-markers t)
     (setq org-startup-indented t))
 #+end_src
-
 *** Org-modern
 Setting up /org-modern/, which uses unicode tricks to make org look nicer
 
@@ -378,51 +381,10 @@ Very important.
            ("C-c n d" . org-roam-dailies-capture-today)))
 #+end_src
 
-*** "get orgfiles by tag" function
-
-With this function and the other setup, any orgfiles tagged with ~dashboard~ will be included in the dashboard, and any files tagged with ~agenda~ will be included in the agenda.
-
-#+begin_src emacs-lisp
-  (defun yaqub/get-org-files-by-tag (dir tag)
-    "Get list of all org files in DIR that contain TAG."
-    (let ((org-files (directory-files-recursively dir "\.org$"))
-          matching-files)
-      (dolist (file org-files)
-        (with-temp-buffer
-          (insert-file-contents file)
-          (goto-char (point-min))
-          (when (search-forward (concat ":" tag ":") nil t)
-            (push file matching-files))))
-      matching-files))
-#+end_src
-*** Org-agenda
-Set up the org-agenda to show files with the "agenda" tag.
-
-#+begin_src emacs-lisp
-(defun yaqub/update-org-agenda-files ()
-  "Update the org-agenda files list."
-  (setq org-agenda-files (yaqub/get-org-files-by-tag "~/Orgfiles" "agenda")))
-
-(yaqub/update-org-agenda-files)
-#+end_src
 *** Org-dashboard
 #+begin_src emacs-lisp
-(use-package org-dashboard
-  :straight t
-  :config
-  (defun yaqub/update-org-dashboard-files ()
-    "Update the org-dashboard files list."
-    (setq org-dashboard-files (yaqub/get-org-files-by-tag "~/Orgfiles" "dashboard")))
-
-  (yaqub/update-org-dashboard-files))
-
-(defun yaqub/org-file-save-hook ()
-  "Update the org-dashboard and org-agenda files list when saving an Org file."
-  (when (and (eq major-mode 'org-mode) (string-prefix-p "~/Orgfiles/" (buffer-file-name)))
-    (yaqub/update-org-dashboard-files)
-    (yaqub/update-org-agenda-files)))
-
-(add-hook 'after-save-hook 'yaqub/org-file-save-hook)
+  (use-package org-dashboard
+    :straight t)
 #+end_src
 * Reading
 ** PDF Tools
@@ -466,6 +428,13 @@ Use calibre db.
 #+end_src
 
 * macOS
+** macOS Mouse
+I'm using mitsuharu emacs now, so I'll set mouse scrolling to behave according to my zoomer inclinations
+
+#+begin_src emacs-lisp
+  (setq mac-mouse-wheel-smooth-scroll t)
+#+end_src
+
 ** Getting passwords from macOS keychain
 Here, I'm declaring two new functions that use Apple's ~security~ command to access passwords in the macOS keychain. I can add Keychain entries with [[elisp:(shell-command "open '/System/Applications/Utilities/Keychain Access.app'")][Keychain Access]].
 
