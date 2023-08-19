@@ -45,6 +45,18 @@ Backup files in a hidden ~.saves~ directory, so they don't cloud up ~ls~
   (setq backup-directory-alist `(("." . "~/.saves")))
   (setq backup-by-copying t)
 #+end_src
+** Automatically tangle this config
+#+begin_src emacs-lisp
+  (defun yaqub/tangle-if-org-in-yaqubmacs ()
+    "If the saved file is an .org file within ~/Development/yaqubmacs, tangle it."
+    (let ((target-dir (expand-file-name "~/Development/yaqubmacs")))
+      (when (and (string-suffix-p ".org" buffer-file-name)
+                 (eq major-mode 'org-mode)
+                 (string-prefix-p target-dir buffer-file-name))
+        (org-babel-tangle))))
+
+  (add-hook 'after-save-hook 'yaqub/tangle-if-org-in-yaqubmacs)
+#+end_src
 * Aesthetics
 This section deals with the aesthetic aspects of our Emacs setup.
 ** Define fonts
@@ -75,10 +87,10 @@ We can also do a transparent title bar on macOS:
 #+end_src
 ** Install and Enable angloid-theme
 #+begin_src emacs-lisp
-  (use-package angloid-theme
-    :straight (angloid-theme :type git :host github :repo "yaqubroli/angloid-theme")
+  (use-package atom-one-dark-theme
+    :straight t
     :config
-    (load-theme 'angloid-light-theme t))
+    (load-theme 'atom-one-dark t))
 #+end_src
 ** Setup all-the-icons
 All-the-icons is a package to use icons in your Emacs.
@@ -350,10 +362,6 @@ Setting up /org-modern/, which uses unicode tricks to make org look nicer
     :config
     (global-org-modern-mode))
 #+end_src
-
-#+RESULTS:
-: t
-
 *** Setup Olivetti-mode for Org
 We'll enable olivetti mode whenever we enter org mode.
 
@@ -377,7 +385,7 @@ Very important.
            ("C-c n i" . org-roam-node-insert)
            ("C-c n g" . org-roam-graph)
            ("C-c n c" . org-roam-capture)
-           ("C-c n d" . org-roam-dailies-capture-today)))
+           ("C-c n d" . org-roam-dailies-goto-today)))
 #+end_src
 
 *** Org-dashboard
@@ -385,8 +393,31 @@ Very important.
   (use-package org-dashboard
     :straight t)
 #+end_src
+
+*** Org-noter
+#+begin_src emacs-lisp
+  (use-package org-noter
+    :straight t)
+#+end_src
 * Reading
-** Better web browsing with /xwwp/
+** Using PDF-Tools instead of DocView
+#+begin_src emacs-lisp 
+  (use-package pdf-tools
+    :ensure t
+    :config
+    ;; Ensure pdf-tools is initialized after installation
+    (pdf-tools-install)
+
+    ;; Make sure PDFs fit the page by default
+    (setq-default pdf-view-display-size 'fit-page)
+
+    ;; Set pdf-view-mode as the default for PDF files
+    (add-to-list 'auto-mode-alist '("\\.pdf\\'" . pdf-view-mode))
+
+    ;; Optional: open PDFs in a new frame by default
+    ;; (setq pdf-view-use-new-open t)
+  )
+#+end_src
 ** /nov.el/ support
 Using nov.el for epub reading
 #+begin_src emacs-lisp
@@ -507,3 +538,31 @@ A lot of the functions here are stolen and very-slightly-modified from Robert Kr
           (next-line))
       (copilot-complete)))
 #+end_src 
+
+* Minibuffer Shortcuts
+#+begin_src emacs-lisp 
+    ;; the command "eval-init" evaluates init.el
+    (defun eval-init ()
+      (interactive)
+      (load-file "~/.emacs.d/init.el"))
+
+    ;; the command "home" opens dired at ~/
+    (defun home ()
+      (interactive)
+      (dired "~/"))
+
+    ;; the command "dev" opens dired at ~/Development
+    (defun dev ()
+      (interactive)
+      (dired "~/Development"))
+
+    ;; the command "org" opens dired at ~/Orgfiles
+    (defun org ()
+      (interactive)
+      (dired "~/Orgfiles"))
+
+    ;; the command "yaqubmacs" opens dired at ~/Development/yaqubmacs
+    (defun yaqubmacs ()
+      (interactive)
+      (dired "~/Development/yaqubmacs"))
+#+end_src
