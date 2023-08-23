@@ -304,62 +304,71 @@ Magit is an interface to the version control system Git, implemented as an Emacs
 #+end_src
 * Writing
 This section is about setting up tools to help us write prose more efficiently; mostly org config.
+** Global bibliography variables
+#+begin_src emacs-lisp 
+  (setq yaqub/global-bibliography '("~/Books/References.bib"
+  			   "~/Articles/References.bib")
+        yaqub/global-library-path '("~/Books/" "~/Articles/")
+        yaqub/global-notes-path "~/Notes/")
+#+end_src
 ** Setup Org
 Here, we separate the org setup into its own function for clarity.
 
 #+begin_src emacs-lisp
-  (defun yaqub/org-font-setup ()
-    ;; These are the sizes I want.
-    (let ((org-level-font-scale '(
-  			  (1 . 1.5)
-  			  (2 . 1.375)
-  			  (3 . 1.25)
-  			  (4 . 1.125)
-  			  (5 . 1.0)
-  			  (6 . 1.0)
-  			  (7 . 1.0)
-  			  (8 . 1.0)
-  			  )))
-      ;; Iterate through all the org levels, and make them the same colour as 'default.
-      (dolist (level (number-sequence 1 8))
-  	     (let* ((org-level-face (intern (format "org-level-%d" level)))
-  	            (org-level-size (cdr (assoc level org-level-font-scale))))
-  	     (when org-level-size
-  	       (set-face-attribute org-level-face nil
-  				   :font yaqub/font-variable-serif
-  				   :foreground (face-attribute 'default :foreground)
-  				   :weight 'bold
-  				   :height org-level-size)))))
-    
-    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-    (set-face-attribute 'org-code nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-table nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-verbatim nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-block nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-block-begin-line nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-block-end-line nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch)))
+    (defun yaqub/org-font-setup ()
+      ;; These are the sizes I want.
+      (let ((org-level-font-scale '(
+    			  (1 . 1.5)
+    			  (2 . 1.375)
+    			  (3 . 1.25)
+    			  (4 . 1.125)
+    			  (5 . 1.0)
+    			  (6 . 1.0)
+    			  (7 . 1.0)
+    			  (8 . 1.0)
+    			  )))
+        ;; Iterate through all the org levels, and make them the same colour as 'default.
+        (dolist (level (number-sequence 1 8))
+    	     (let* ((org-level-face (intern (format "org-level-%d" level)))
+    	            (org-level-size (cdr (assoc level org-level-font-scale))))
+    	     (when org-level-size
+    	       (set-face-attribute org-level-face nil
+    				   :font yaqub/font-variable-serif
+    				   :foreground (face-attribute 'default :foreground)
+    				   :weight 'bold
+    				   :height org-level-size)))))
+      
+      ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+      (set-face-attribute 'org-code nil
+    			:font yaqub/font-monospace
+    			:inherit '(shadow fixed-pitch))
+      (set-face-attribute 'org-table nil
+    			:font yaqub/font-monospace
+    			:inherit '(shadow fixed-pitch))
+      (set-face-attribute 'org-verbatim nil
+    			:font yaqub/font-monospace
+    			:inherit '(shadow fixed-pitch))
+      (set-face-attribute 'org-block nil
+    			:font yaqub/font-monospace
+    			:inherit '(shadow fixed-pitch))
+      (set-face-attribute 'org-block-begin-line nil
+    			:font yaqub/font-monospace
+    			:inherit '(shadow fixed-pitch))
+      (set-face-attribute 'org-block-end-line nil
+    			:font yaqub/font-monospace
+    			:inherit '(shadow fixed-pitch)))
 
-  (use-package org
-    :straight t
-    :config
-    (yaqub/org-font-setup)
-    (add-hook 'org-mode-hook 'variable-pitch-mode)
-    (setq org-hide-emphasis-markers t)
-    (setq org-startup-indented t)
-    ;; Enable olivetti on all org buffers
-    (add-hook 'org-mode-hook 'olivetti-mode))
+    (use-package org
+      :straight t
+      :config
+      (yaqub/org-font-setup)
+      (add-hook 'org-mode-hook 'variable-pitch-mode)
+      (setq org-hide-emphasis-markers t)
+      (setq org-startup-indented t)
+      ;; org-cite-bibliography will be used for all bib-related files
+      (setq org-cite-global-bibliography yaqub/global-bibliography)
+      ;; Enable olivetti on all org buffers
+      (add-hook 'org-mode-hook 'olivetti-mode))
 #+end_src
 *** Org-roam
 
@@ -378,62 +387,49 @@ Very important.
            ("C-c n d" . org-roam-dailies-goto-today)
   	 ("C-c n D" . org-roam-dailies-goto-date)))
 #+end_src
-*** Org-ref
-Better citation management than how org does it by default.
-
-This is, near-verbatim, the setup code on the official [[https://github.com/jkitchin/org-ref/blob/master/org-ref.org][org-ref manual]].
-
-The only difference is I removed some stuff that seems to only work if you're a developer (i.e. have ~org-ref-ivy~ in your load-path and load it seperately, instead of the MELPA way where it needs to be ~required~ within org-ref's main ~use-package~ declaration.)
-
+*** Ivy-bibtex
 #+begin_src emacs-lisp
   (use-package ivy-bibtex
-    :init
-    (setq bibtex-completion-bibliography '("~/Books/References.bib"
-                                           "~/Articles/References.bib")
-          bibtex-completion-library-path '("~/Books"
-                                           "~/Articles")
-          bibtex-completion-notes-path "~/Orgfiles/roam/"
-          bibtex-completion-notes-template-multiple-files "* ${author-or-editor}, ${title}, ${journal}, (${year}) :${=type=}: \n\nSee [[cite:&${=key=}]]\n"
-          bibtex-completion-additional-search-fields '(keywords)
-          bibtex-completion-display-formats
-          '((article       . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${journal:40}")
-            (inbook        . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} Chapter ${chapter:32}")
-            (incollection  . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-            (inproceedings . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-            (t             . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*}"))
-          bibtex-completion-pdf-open-function
-          (lambda (fpath) find-file-other-window fpath)))
-
-  (use-package org-ref
     :straight t
-    :init
-    (require 'bibtex)
-    (setq bibtex-autokey-year-length 4
-          bibtex-autokey-name-year-separator "-"
-          bibtex-autokey-year-title-separator "-"
-          bibtex-autokey-titleword-separator "-"
-          bibtex-autokey-titlewords 2
-          bibtex-autokey-titlewords-stretch 1
-          bibtex-autokey-titleword-length 5)
     :config
-    (define-key bibtex-mode-map (kbd "H-b") 'org-ref-bibtex-hydra/body)
-    (define-key org-mode-map (kbd "C-c ]") 'org-ref-insert-link)
-    (define-key org-mode-map (kbd "s-[") 'org-ref-insert-link-hydra/body)
-    ;; Require the org-ref-ivy and other org-ref related packages within org-ref's config
-    (require 'org-ref-ivy)
-    (require 'org-ref-arxiv)
-    (require 'org-ref-scopus)
-    (require 'org-ref-wos))
+    (setq bibtex-completion-bibliography yaqub/global-bibliography
+  	bibtex-completion-library-path yaqub/global-library-path
+  	bibtex-completion-notes-path yaqub/global-notes-path
+  	bibtex-completion-pdf-field "file"
+  	bibtex-completion-notes-template-multiple-files
+  	(concat
+  	 "#+TITLE: ${title}\n"
+  	 "#+ROAM_KEY: cite:${=key=}\n"
+  	 "* TODO Notes\n"
+  	 ":PROPERTIES:\n"
+  	 ":Custom_ID: ${=key=}\n"
+  	 ":NOTER_DOCUMENT: %(orb-process-file-field \"${=key=}\")\n"))
+    (ivy-set-actions
+     'ivy-bibtex
+     '(("p" ivy-bibtex-open-any "Open PDF, URL, or DOI" ivy-bibtex-open-any)
+       ("e" ivy-bibtex-edit-notes "Edit notes" ivy-bibtex-edit-notes))))
+#+end_src
 
-  (use-package org-ref-ivy
-    :straight nil
-    :after org-ref
-    :init 
-    (setq org-ref-insert-link-function 'org-ref-insert-link-hydra/body
-          org-ref-insert-cite-function 'org-ref-cite-insert-ivy
-          org-ref-insert-label-function 'org-ref-insert-label-link
-          org-ref-insert-ref-function 'org-ref-insert-ref-link
-          org-ref-cite-onclick-function (lambda (_) (org-ref-citation-hydra/body))))
+*** Citar
+This plugin provides the basic functionality of ~org-ref~, but uses the ~org-cite~ syntax instead of breaking with what's built into emacs.
+
+#+begin_src emacs-lisp
+  (use-package citar
+    :straight t
+    :custom
+    (org-cite-insert-processor 'citar)
+    (org-cite-follow-processor 'citar)
+    (org-cite-activate-processor 'citar)
+    (citar-bibliography org-cite-global-bibliography)
+    :hook
+    (LaTeX-mode . citar-capf-setup)
+    (org-mode . citar-capf-setup))
+
+#+end_src
+*** Org-roam-bibtex
+#+begin_src emacs-lisp
+  (use-package org-roam-bibtex
+    :after org-roam)
 #+end_src
 *** Org-modern
 Only temporarily re-deploying org-modern, until the font locking issue is fixed in svg-tag-mode (cf. [[https://github.com/rougier/svg-tag-mode/issues/48][issue]])
@@ -498,12 +494,40 @@ Render books in Tim Applevision instead of Stallmanvision.
 ** Integrate with Calibre
 Use calibre db.
 #+begin_src emacs-lisp
+  (defun yaqub/calibredb-export-bibtex ()
+    (interactive)
+    (let ((bibtex-command "calibredb catalog ~/Books/References.bib"))
+      (shell-command bibtex-command)))
+
   (use-package calibredb
     :defer t
     :config
     (setq calibredb-root-dir "~/Books")
     (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir))
     (evil-set-initial-state 'calibredb-search-mode 'emacs))
+#+end_src
+** Integrate with Zotero
+#+begin_src emacs-lisp
+  (defun zotra-download-attachment-for-current-entry ()
+    (interactive)
+    (save-excursion
+      (bibtex-beginning-of-entry)
+      (let* ((entry (bibtex-parse-entry t))
+             (key (cdr (assoc "=key=" entry)))
+             (url (cdr (assoc "url" entry)))
+             (filename (concat key ".pdf"))
+             (filename (when entry
+                         (zotra-download-attachment-from-url
+                          url nil filename))))
+        (when filename
+          (bibtex-make-field (list "File" nil filename) t)))))
+
+  (use-package zotra
+    :straight t
+    :config
+    (setq zotra-cli-command '("node" "~/Development/zotra-cli/bin/index.js"))
+    (add-hook 'zotra-after-get-bibtex-entry-hook
+  	    'zotra-download-attachment-for-current-entry))
 #+end_src
 * macOS
 ** macOS Mouse
@@ -598,28 +622,32 @@ A lot of the functions here are stolen and very-slightly-modified from Robert Kr
 
 * Minibuffer Shortcuts
 #+begin_src emacs-lisp 
-    ;; the command "eval-init" evaluates init.el
-    (defun eval-init ()
-      (interactive)
-      (load-file "~/.emacs.d/init.el"))
+  ;; the command "eval-init" evaluates init.el
+  (defun eval-init ()
+    (interactive)
+    (load-file "~/.emacs.d/init.el"))
 
-    ;; the command "home" opens dired at ~/
-    (defun home ()
-      (interactive)
-      (dired "~/"))
+  ;; the command "home" opens dired at ~/
+  (defun home ()
+    (interactive)
+    (dired "~/"))
 
-    ;; the command "dev" opens dired at ~/Development
-    (defun dev ()
-      (interactive)
-      (dired "~/Development"))
+  ;; the command "dev" opens dired at ~/Development
+  (defun dev ()
+    (interactive)
+    (dired "~/Development"))
 
-    ;; the command "org" opens dired at ~/Orgfiles
-    (defun org ()
-      (interactive)
-      (dired "~/Orgfiles"))
+  ;; the command "org" opens dired at ~/Orgfiles
+  (defun org ()
+    (interactive)
+    (dired "~/Orgfiles"))
 
-    ;; the command "yaqubmacs" opens dired at ~/Development/yaqubmacs
-    (defun yaqubmacs ()
-      (interactive)
-      (dired "~/Development/yaqubmacs"))
+  ;; the command "yaqubmacs" opens dired at ~/Development/yaqubmacs
+  (defun yaqubmacs ()
+    (interactive)
+    (dired "~/Development/yaqubmacs"))
+
+  (defun bib ()
+    (interactive)
+    (ivy-bibtex))
 #+end_src
