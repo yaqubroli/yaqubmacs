@@ -39,6 +39,11 @@ Make mitsuharu keybindings behave like mainline emacs (so command is the super k
 #+begin_src emacs-lisp 
   (setq ring-bell-function 'ignore)
 #+end_src
+** Silence the splash screen
+#+begin_src emacs-lisp 
+  (setq inhibit-startup-message t)
+  (setq initial-buffer-choice t)
+#+end_src
 ** File Backups
 Backup files in a hidden ~.saves~ directory, so they don't cloud up ~ls~
 #+begin_src emacs-lisp
@@ -196,6 +201,14 @@ Which-Key is a package that displays a popup listing the possible keys to comple
 Evil-mode provides Vim keybindings in Emacs.
 
 #+begin_src emacs-lisp
+  (defun yaqub/jump-to-scratch-or-quit (&rest args)
+    "Switch to *scratch* buffer when :q is executed on single window, or quit otherwise."
+    (if (and (one-window-p t)
+             (not (string= (buffer-name) "*scratch*")))
+        (switch-to-buffer "*scratch*")
+      (unless (string= (buffer-name) "*scratch*")
+        (apply 'evil-quit args))))
+
   (use-package evil
     :straight t
     :init
@@ -203,7 +216,9 @@ Evil-mode provides Vim keybindings in Emacs.
     (setq evil-want-keybinding nil)
     (setq evil-want-C-u-scroll t)
     :config
-    (evil-mode 1))
+    (evil-mode 1)
+    (advice-add 'evil-quit :around 'yaqub/jump-to-scratch-or-quit))
+
   (use-package evil-collection
     :straight t
     :after evil
@@ -376,8 +391,6 @@ Very important.
 #+begin_src emacs-lisp
   (use-package org-roam
     :straight t
-    :hook 
-    (after-init . org-roam-mode)
     :custom
     (org-roam-directory "~/Orgfiles/roam")
     :bind (("C-c n f" . org-roam-node-find)
@@ -429,7 +442,9 @@ This plugin provides the basic functionality of ~org-ref~, but uses the ~org-cit
 *** Org-roam-bibtex
 #+begin_src emacs-lisp
   (use-package org-roam-bibtex
-    :after org-roam)
+    :after org-roam
+    :config
+    (org-roam-bibtex-mode))
 #+end_src
 *** Org-modern
 Only temporarily re-deploying org-modern, until the font locking issue is fixed in svg-tag-mode (cf. [[https://github.com/rougier/svg-tag-mode/issues/48][issue]])
