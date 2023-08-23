@@ -201,13 +201,12 @@ Which-Key is a package that displays a popup listing the possible keys to comple
 Evil-mode provides Vim keybindings in Emacs.
 
 #+begin_src emacs-lisp
-  (defun yaqub/jump-to-scratch-or-quit (&rest args)
+  (defun yaqub/jump-to-scratch-or-quit (orig-fun &rest args)
     "Switch to *scratch* buffer when :q is executed on single window, or quit otherwise."
-    (if (and (one-window-p t)
-             (not (string= (buffer-name) "*scratch*")))
-        (switch-to-buffer "*scratch*")
-      (unless (string= (buffer-name) "*scratch*")
-        (apply 'evil-quit args))))
+    (if (one-window-p t)
+        (if (not (string= (buffer-name) "*scratch*"))
+            (switch-to-buffer "*scratch*"))
+      (apply orig-fun args)))
 
   (use-package evil
     :straight t
