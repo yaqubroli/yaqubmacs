@@ -66,7 +66,7 @@ Backup files in a hidden ~.saves~ directory, so they don't cloud up ~ls~
 This section deals with the aesthetic aspects of our Emacs setup.
 ** Define fonts
 #+begin_src emacs-lisp
-  (setq yaqub/font-monospace "CMU Typewriter Text")
+  (setq yaqub/font-monospace "Iosevka")
   (setq yaqub/font-variable-serif "CMU Serif")
   (setq yaqub/font-variable-sans "CMU Bright")
   
@@ -231,40 +231,15 @@ Evil-mode provides Vim keybindings in Emacs.
     :config
     (global-evil-mc-mode 1))
 #+end_src
+** Dirvish
+Dirvish is an improved version of dired. Old dired settings [[id:41303942-1C05-429C-A876-858BAADB853F][here.]]
 
-** Dired hacks
-*** Dired subtree
-#+begin_src emacs-lisp
-  (use-package dired-subtree
+#+begin_src emacs-lisp 
+  (use-package dirvish
     :straight t
-    :bind (:map dired-mode-map
-           ("C-, i" . dired-subtree-insert)
-           ("C-, r" . dired-subtree-remove)
-           ("C-, t" . dired-subtree-toggle)
-           ("C-, c" . dired-subtree-cycle)
-           ("C-, v" . dired-subtree-revert)
-           ("C-, n" . dired-subtree-narrow)
-           ("C-, u" . dired-subtree-up)
-           ("C-, d" . dired-subtree-down)
-           ("C-, s" . dired-subtree-next-sibling)
-           ("C-, p" . dired-subtree-previous-sibling)
-           ("C-, b" . dired-subtree-beginning)
-           ("C-, e" . dired-subtree-end)
-           ("C-, m" . dired-subtree-mark-subtree)
-           ("C-, u" . dired-subtree-unmark-subtree)
-           ("C-, f" . dired-subtree-only-this-file)
-           ("C-, o" . dired-subtree-only-this-directory)))
+    :config
+    (dirvish-override-dired-mode))
 #+end_src
-
-*** Dired sidebar (gives Atom/vscode-like sidebar, but leveraging emacs functionality)
-
-#+begin_src emacs-lisp
-  (use-package dired-sidebar
-    :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
-    :ensure t
-    :commands (dired-sidebar-toggle-sidebar))
-#+end_src
-
 * Coding
 This section is about setting up tools to help us write code more efficiently.
 
@@ -320,7 +295,7 @@ Magit is an interface to the version control system Git, implemented as an Emacs
 This section is about setting up tools to help us write prose more efficiently; mostly org config.
 ** Global bibliography variables
 #+begin_src emacs-lisp 
-  (setq yaqub/global-bibliography '("~/Books/References.bib"
+  (setq yaqub/global-bibliography '("~/Books/catalog.bib"
   			   "~/Articles/References.bib")
         yaqub/global-library-path '("~/Books/" "~/Articles/")
         yaqub/global-notes-path "~/Notes/")
@@ -329,60 +304,60 @@ This section is about setting up tools to help us write prose more efficiently; 
 Here, we separate the org setup into its own function for clarity.
 
 #+begin_src emacs-lisp
-    (defun yaqub/org-font-setup ()
-      ;; These are the sizes I want.
-      (let ((org-level-font-scale '(
-    			  (1 . 1.5)
-    			  (2 . 1.375)
-    			  (3 . 1.25)
-    			  (4 . 1.125)
-    			  (5 . 1.0)
-    			  (6 . 1.0)
-    			  (7 . 1.0)
-    			  (8 . 1.0)
-    			  )))
-        ;; Iterate through all the org levels, and make them the same colour as 'default.
-        (dolist (level (number-sequence 1 8))
-    	     (let* ((org-level-face (intern (format "org-level-%d" level)))
-    	            (org-level-size (cdr (assoc level org-level-font-scale))))
-    	     (when org-level-size
-    	       (set-face-attribute org-level-face nil
-    				   :font yaqub/font-variable-serif
-    				   :foreground (face-attribute 'default :foreground)
-    				   :weight 'bold
-    				   :height org-level-size)))))
-      
-      ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-      (set-face-attribute 'org-code nil
-    			:font yaqub/font-monospace
-    			:inherit '(shadow fixed-pitch))
-      (set-face-attribute 'org-table nil
-    			:font yaqub/font-monospace
-    			:inherit '(shadow fixed-pitch))
-      (set-face-attribute 'org-verbatim nil
-    			:font yaqub/font-monospace
-    			:inherit '(shadow fixed-pitch))
-      (set-face-attribute 'org-block nil
-    			:font yaqub/font-monospace
-    			:inherit '(shadow fixed-pitch))
-      (set-face-attribute 'org-block-begin-line nil
-    			:font yaqub/font-monospace
-    			:inherit '(shadow fixed-pitch))
-      (set-face-attribute 'org-block-end-line nil
-    			:font yaqub/font-monospace
-    			:inherit '(shadow fixed-pitch)))
+  (defun yaqub/org-font-setup ()
+    ;; These are the sizes I want.
+    (let ((org-level-font-scale '(
+  			  (1 . 1.5)
+  			  (2 . 1.375)
+  			  (3 . 1.25)
+  			  (4 . 1.125)
+  			  (5 . 1.0)
+  			  (6 . 1.0)
+  			  (7 . 1.0)
+  			  (8 . 1.0)
+  			  )))
+      ;; Iterate through all the org levels, and make them the same colour as 'default.
+      (dolist (level (number-sequence 1 8))
+  	     (let* ((org-level-face (intern (format "org-level-%d" level)))
+  	            (org-level-size (cdr (assoc level org-level-font-scale))))
+  	     (when org-level-size
+  	       (set-face-attribute org-level-face nil
+  				   :font yaqub/font-variable-serif
+  				   :foreground (face-attribute 'default :foreground)
+  				   :weight 'bold
+  				   :height org-level-size)))))
+    
+    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+    (set-face-attribute 'org-code nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-table nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-verbatim nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-block nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-block-begin-line nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-block-end-line nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch)))
 
-    (use-package org
-      :straight t
-      :config
-      (yaqub/org-font-setup)
-      (add-hook 'org-mode-hook 'variable-pitch-mode)
-      (setq org-hide-emphasis-markers t)
-      (setq org-startup-indented t)
-      ;; org-cite-bibliography will be used for all bib-related files
-      (setq org-cite-global-bibliography yaqub/global-bibliography)
-      ;; Enable olivetti on all org buffers
-      (add-hook 'org-mode-hook 'olivetti-mode))
+  (use-package org
+    :straight t
+    :config
+    (yaqub/org-font-setup)
+    (add-hook 'org-mode-hook 'variable-pitch-mode)
+    (setq org-hide-emphasis-markers t)
+    (setq org-startup-indented t)
+    ;; org-cite-bibliography will be used for all bib-related files
+    (setq org-cite-global-bibliography yaqub/global-bibliography)
+    ;; Enable olivetti on all org buffers
+    (add-hook 'org-mode-hook 'olivetti-mode))
 #+end_src
 *** Org-roam
 
@@ -392,36 +367,36 @@ Very important.
     :straight t
     :custom
     (org-roam-directory "~/Orgfiles/roam")
+    :config
+    (setq org-roam-capture-templates
+          '(("d" "default" plain
+     "%?"
+     :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+     :unnarrowed t)
+            
+            ("r" "bibliography reference" plain
+             (file "~/Orgfiles/roam/templates/orb.org")
+             :target
+             (file+head "references/${citekey}.org" "#+title: ${title}\n"))))
     :bind (("C-c n f" . org-roam-node-find)
            ("C-c n i" . org-roam-node-insert)
            ("C-c n g" . org-roam-graph)
            ("C-c n c" . org-roam-capture)
            ("C-c n d" . org-roam-dailies-goto-today)
-  	 ("C-c n D" . org-roam-dailies-goto-date)))
+           ("C-c n D" . org-roam-dailies-goto-date)))
 #+end_src
 *** Ivy-bibtex
 #+begin_src emacs-lisp
   (use-package ivy-bibtex
-    :straight t
-    :config
-    (setq bibtex-completion-bibliography yaqub/global-bibliography
+  :straight t
+  :config
+  (setq bibtex-completion-bibliography yaqub/global-bibliography
   	bibtex-completion-library-path yaqub/global-library-path
-  	bibtex-completion-notes-path yaqub/global-notes-path
-  	bibtex-completion-pdf-field "file"
-  	bibtex-completion-notes-template-multiple-files
-  	(concat
-  	 "#+TITLE: ${title}\n"
-  	 "#+ROAM_KEY: cite:${=key=}\n"
-  	 "* TODO Notes\n"
-  	 ":PROPERTIES:\n"
-  	 ":Custom_ID: ${=key=}\n"
-  	 ":NOTER_DOCUMENT: %(orb-process-file-field \"${=key=}\")\n"))
-    (ivy-set-actions
-     'ivy-bibtex
-     '(("p" ivy-bibtex-open-any "Open PDF, URL, or DOI" ivy-bibtex-open-any)
-       ("e" ivy-bibtex-edit-notes "Edit notes" ivy-bibtex-edit-notes))))
+  	bibtex-completion-pdf-field "file")
+  (ivy-set-actions   
+   'ivy-bibtex
+   '(("e" ivy-bibtex-edit-notes "Edit notes" ivy-bibtex-edit-notes))))
 #+end_src
-
 *** Citar
 This plugin provides the basic functionality of ~org-ref~, but uses the ~org-cite~ syntax instead of breaking with what's built into emacs.
 
@@ -443,16 +418,20 @@ This plugin provides the basic functionality of ~org-ref~, but uses the ~org-cit
   (use-package org-roam-bibtex
     :after org-roam
     :config
+    (setq orb-preformat-keywords
+        '("citekey" "title" "url" "author-or-editor" "keywords" "file")
+        orb-process-file-keyword t
+        orb-attached-file-extensions '("epub" "pdf"))
     (org-roam-bibtex-mode))
 #+end_src
 *** Org-modern
 Only temporarily re-deploying org-modern, until the font locking issue is fixed in svg-tag-mode (cf. [[https://github.com/rougier/svg-tag-mode/issues/48][issue]])
 
 #+begin_src emacs-lisp
-    (use-package org-modern
-      :straight t
-      :config
-      (global-org-modern-mode))
+  (use-package org-modern
+    :straight t
+    :config
+    (global-org-modern-mode))
 #+end_src
 *** Org-dashboard
 #+begin_src emacs-lisp
@@ -464,6 +443,13 @@ Only temporarily re-deploying org-modern, until the font locking issue is fixed 
   (use-package org-noter
     :after (:all org nov pdf-tools)
     :straight t)
+
+  (defun yaqub/org-noter-here (&optional arg)
+    (interactive "P")
+    (let ((org-noter-always-create-frame nil))
+      (org-noter arg)))
+
+  (global-set-key (kbd "C-c N") 'yaqub/org-noter-here)
 #+end_src
 * Reading
 ** Using PDF-Tools instead of DocView
@@ -544,6 +530,10 @@ Use calibre db.
   	    'zotra-download-attachment-for-current-entry))
 #+end_src
 * macOS
+** macOS fullscreen
+#+begin_src emacs-lisp 
+  (setq ns-use-native-fullscreen t)
+#+end_src
 ** macOS Mouse
 I'm using mitsuharu emacs now, so I'll set mouse scrolling to behave according to my zoomer inclinations
 
