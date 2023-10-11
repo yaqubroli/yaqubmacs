@@ -304,60 +304,47 @@ This section is about setting up tools to help us write prose more efficiently; 
 Here, we separate the org setup into its own function for clarity.
 
 #+begin_src emacs-lisp
-  (defun yaqub/org-font-setup ()
-    ;; These are the sizes I want.
-    (let ((org-level-font-scale '(
-  			  (1 . 1.5)
-  			  (2 . 1.375)
-  			  (3 . 1.25)
-  			  (4 . 1.125)
-  			  (5 . 1.0)
-  			  (6 . 1.0)
-  			  (7 . 1.0)
-  			  (8 . 1.0)
-  			  )))
-      ;; Iterate through all the org levels, and make them the same colour as 'default.
-      (dolist (level (number-sequence 1 8))
-  	     (let* ((org-level-face (intern (format "org-level-%d" level)))
-  	            (org-level-size (cdr (assoc level org-level-font-scale))))
-  	     (when org-level-size
-  	       (set-face-attribute org-level-face nil
-  				   :font yaqub/font-variable-serif
-  				   :foreground (face-attribute 'default :foreground)
-  				   :weight 'bold
-  				   :height org-level-size)))))
-    
-    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-    (set-face-attribute 'org-code nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-table nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-verbatim nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-block nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-block-begin-line nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-block-end-line nil
-  			:font yaqub/font-monospace
-  			:inherit '(shadow fixed-pitch)))
+       (defun yaqub/org-font-setup ()
+         ;; set all org levels to use variable-pitch font
+         (dolist (level (number-sequence 1 8))
+       	     (let* ((org-level-face (intern (format "org-level-%d" level))))
+       	     (set-face-attribute org-level-face nil
+       				 :font yaqub/font-variable-serif
+       				 :foreground (face-attribute 'default :foreground)
+       				 :weight 'bold
+       				 :height 1.0)))
+         
+         ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+         (set-face-attribute 'org-code nil
+       			:font yaqub/font-monospace
+       			:inherit '(shadow fixed-pitch))
+         (set-face-attribute 'org-table nil
+       			:font yaqub/font-monospace
+       			:inherit '(shadow fixed-pitch))
+         (set-face-attribute 'org-verbatim nil
+       			:font yaqub/font-monospace
+       			:inherit '(shadow fixed-pitch))
+         (set-face-attribute 'org-block nil
+       			:font yaqub/font-monospace
+       			:inherit '(shadow fixed-pitch))
+         (set-face-attribute 'org-block-begin-line nil
+       			:font yaqub/font-monospace
+       			:inherit '(shadow fixed-pitch))
+         (set-face-attribute 'org-block-end-line nil
+       			:font yaqub/font-monospace
+       			:inherit '(shadow fixed-pitch)))
 
-  (use-package org
-    :straight t
-    :config
-    (yaqub/org-font-setup)
-    (add-hook 'org-mode-hook 'variable-pitch-mode)
-    (setq org-hide-emphasis-markers t)
-    (setq org-startup-indented t)
-    ;; org-cite-bibliography will be used for all bib-related files
-    (setq org-cite-global-bibliography yaqub/global-bibliography)
-    ;; Enable olivetti on all org buffers
-    (add-hook 'org-mode-hook 'olivetti-mode))
+       (use-package org
+         :straight t
+         :config
+         (yaqub/org-font-setup)
+         (add-hook 'org-mode-hook 'variable-pitch-mode)
+         (setq org-hide-emphasis-markers t)
+         (setq org-startup-indented t)
+         ;; org-cite-bibliography will be used for all bib-related files
+         (setq org-cite-global-bibliography yaqub/global-bibliography)
+         ;; Enable olivetti on all org buffers
+         (add-hook 'org-mode-hook 'olivetti-mode))
 #+end_src
 *** Org-roam
 
@@ -384,6 +371,18 @@ Very important.
            ("C-c n c" . org-roam-capture)
            ("C-c n d" . org-roam-dailies-goto-today)
            ("C-c n D" . org-roam-dailies-goto-date)))
+
+
+  (defun yaqub/org-roam-setup-on-startup ()
+    "Open specific roam file and today's daily note side by side on Emacs startup."
+    ;; Open the specific roam file
+    (find-file "/Users/yaqub/Orgfiles/roam/00000000000000-home.org")
+    (split-window-right)
+    (other-window 1)
+    ;; Open today's daily note
+    (org-roam-dailies-goto-today))
+  ;; Add the function to the after-init-hook to ensure it runs after Emacs is fully loaded
+  (add-hook 'after-init-hook 'yaqub/org-roam-setup-on-startup)
 #+end_src
 *** Ivy-bibtex
 #+begin_src emacs-lisp
@@ -411,7 +410,6 @@ This plugin provides the basic functionality of ~org-ref~, but uses the ~org-cit
     :hook
     (LaTeX-mode . citar-capf-setup)
     (org-mode . citar-capf-setup))
-
 #+end_src
 *** Org-roam-bibtex
 #+begin_src emacs-lisp
@@ -442,7 +440,11 @@ Only temporarily re-deploying org-modern, until the font locking issue is fixed 
 #+begin_src emacs-lisp
   (use-package org-noter
     :after (:all org nov pdf-tools)
-    :straight t)
+    :straight
+               (:repo "org-noter/org-noter"
+                      :host github
+                      :type git
+                      :files ("*.el" "modules/*.el")))
 
   (defun yaqub/org-noter-here (&optional arg)
     (interactive "P")
@@ -450,6 +452,10 @@ Only temporarily re-deploying org-modern, until the font locking issue is fixed 
       (org-noter arg)))
 
   (global-set-key (kbd "C-c N") 'yaqub/org-noter-here)
+#+end_src
+*** Making sure org links open in the same window
+#+begin_src emacs-lisp
+    (setq org-link-frame-setup '((file . find-file)))
 #+end_src
 * Reading
 ** Using PDF-Tools instead of DocView
@@ -577,23 +583,7 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
 #+END_SRC
 * AI Tools
 Currently, this is in a later part of the config because of my ~ns-keychain~ functions that I'm using for the username and password(s) and API keys and stuff. Dunno if this is the best idea.
-
-** OpenAI 
-This library is required for ChatGPT, DeepL etc to function
-#+begin_src emacs-lisp 
-  (use-package openai
-    :straight (openai :type git :host github :repo "emacs-openai/openai")
-    :config (setq openai-key (ns-keychain-get-generic-password "OpenAI" "walchuk2018@icloud.com")))
-  #+end_src
-*** ChatGPT
-#+begin_src emacs-lisp
-  (use-package chatgpt
-    :straight (chatgpt :type git :host github :repo "emacs-openai/chatgpt")
-    :config
-    (add-hook 'chatgpt-input-mode-hook (lambda () (evil-insert 1)))
-    (setq chatgpt-model "gpt-4")
-    (setq chatgpt-window-prompt ""))
-#+end_src
+** /org-ai/
 ** Github Copilot
 A lot of the functions here are stolen and very-slightly-modified from Robert Krahn's [[https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup][blog post]] on setting up Copilot in emacs.
 
