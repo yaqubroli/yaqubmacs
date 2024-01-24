@@ -630,18 +630,49 @@ Use calibre db.
 #+end_src
 ** Text-to-speech 
 #+begin_src emacs-lisp 
+  ;; Function to speak selected text using macOS's say command
   (defun macos-speak-region (start end)
     "Speak text between START and END using macOS's say command."
     (interactive "r")
-    (shell-command-on-region start end "say"))
+    (unless (eq major-mode 'pdf-view-mode)
+      (shell-command-on-region start end "say")))
 
+  ;; Function to speak the entire buffer
   (defun macos-speak-buffer ()
     "Speak the entire buffer using macOS's say command."
     (interactive)
     (macos-speak-region (point-min) (point-max)))
 
+  ;; Function to speak selected text in a PDF opened with pdf-tools
+  (defun macos-speak-pdf-selection ()
+    "Speak the selected text in a PDF opened with pdf-tools."
+    (interactive)
+    (when (eq major-mode 'pdf-view-mode)
+      (let ((text (pdf-view-active-region-text)))
+        (unless (string-blank-p text)
+          (with-temp-buffer
+            (insert (mapconcat 'identity text " "))
+            (shell-command-on-region (point-min) (point-max) "say"))))))
+
+  ;; Function to speak the entire text of the current PDF page
+  (defun macos-speak-pdf-page ()
+    "Speak the text of the current PDF page."
+    (interactive)
+    (when (eq major-mode 'pdf-view-mode)
+      (let ((text (pdf-view-active-region-text)))
+        (if (string-blank-p (car text))
+            (message "No text selected or empty page")
+          (with-temp-buffer
+            (insert (mapconcat 'identity text " "))
+            (shell-command-on-region (point-min) (point-max) "say"))))))
+
+  ;; Keybindings
   (global-set-key (kbd "C-c s") 'macos-speak-region)
   (global-set-key (kbd "C-c M-s") 'macos-speak-buffer)
+
+  (with-eval-after-load 'pdf-view
+    (define-key pdf-view-mode-map (kbd "C-c s") 'macos-speak-pdf-selection)
+    (define-key pdf-view-mode-map (kbd "C-c M-s") 'macos-speak-pdf-page))
 #+end_src
 
 * EAF
