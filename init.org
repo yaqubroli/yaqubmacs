@@ -135,13 +135,18 @@ Moody is a package for creating attractive mode-lines.
 Minions is a package for managing and organizing minor-mode lighters in the mode-line.
 
 #+begin_src emacs-lisp
-(use-package minions
-  :straight t
-  :config
-  (setq minions-mode-line-lighter "M")
-  (setq minions-mode-line-delimiters '("" . ""))
-  (minions-mode 1))
+  (use-package minions
+    :straight t
+    :config
+    (setq minions-mode-line-lighter "M")
+    (setq minions-mode-line-delimiters '("" . ""))
+    (add-to-list 'minions-prominent-modes 'org-st-andrews-mode)
+    (minions-mode 1))
 #+end_src
+
+#+RESULTS:
+: t
+
 ** Setup Olivetti-mode
 We'll enable olivetti mode whenever we enter org mode.
 #+begin_src emacs-lisp
@@ -190,13 +195,12 @@ Which-Key is a package that displays a popup listing the possible keys to comple
   (which-key-mode)
   :config
   ;; Reduce the delay before which-key popup appears
-  (setq which-key-idle-delay 0.3)
+  (setq which-key-idle-delay 0)
   ;; Set the width of the which-key popup window
   (setq which-key-side-window-max-width 0.33)
   ;; Set the location of the which-key popup window to the bottom
   (setq which-key-side-window-location 'bottom))
 #+end_src
-
 ** Setup Evil-mode
 Evil-mode provides Vim keybindings in Emacs.
 
@@ -295,59 +299,65 @@ Magit is an interface to the version control system Git, implemented as an Emacs
 This section is about setting up tools to help us write prose more efficiently; mostly org config.
 ** Global bibliography variables
 #+begin_src emacs-lisp 
-  (setq yaqub/global-bibliography '("~/Books/catalog.bib"
+  (setq yaqub/global-bibliography '("~/Books/References.bib"
   			   "~/Articles/References.bib")
         yaqub/global-library-path '("~/Books/" "~/Articles/")
-        yaqub/global-notes-path "~/Notes/")
+        yaqub/global-notes-path "~/Orgfiles/roam/references/")
 #+end_src
 ** Setup Org
 Here, we separate the org setup into its own function for clarity.
 
 #+begin_src emacs-lisp
-       (defun yaqub/org-font-setup ()
-         ;; set all org levels to use variable-pitch font
-         (dolist (level (number-sequence 1 8))
-       	     (let* ((org-level-face (intern (format "org-level-%d" level))))
-       	     (set-face-attribute org-level-face nil
-       				 :font yaqub/font-variable-serif
-       				 :foreground (face-attribute 'default :foreground)
-       				 :weight 'bold
-       				 :height 1.0)))
-         
-         ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-         (set-face-attribute 'org-code nil
-       			:font yaqub/font-monospace
-       			:inherit '(shadow fixed-pitch))
-         (set-face-attribute 'org-table nil
-       			:font yaqub/font-monospace
-       			:inherit '(shadow fixed-pitch))
-         (set-face-attribute 'org-verbatim nil
-       			:font yaqub/font-monospace
-       			:inherit '(shadow fixed-pitch))
-         (set-face-attribute 'org-block nil
-       			:font yaqub/font-monospace
-       			:inherit '(shadow fixed-pitch))
-         (set-face-attribute 'org-block-begin-line nil
-       			:font yaqub/font-monospace
-       			:inherit '(shadow fixed-pitch))
-         (set-face-attribute 'org-block-end-line nil
-       			:font yaqub/font-monospace
-       			:inherit '(shadow fixed-pitch)))
+  (defun yaqub/org-font-setup ()
+    ;; set all org levels to use variable-pitch font
+    (dolist (level (number-sequence 1 8))
+  	     (let* ((org-level-face (intern (format "org-level-%d" level))))
+  	     (set-face-attribute org-level-face nil
+  				 :font yaqub/font-variable-serif
+  				 :foreground (face-attribute 'default :foreground)
+  				 :weight (if (= level 1) 'bold 'normal)
+  				 :height 1.0)))
+    
+    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+    (set-face-attribute 'org-code nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-table nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-verbatim nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-block nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-block-begin-line nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-block-end-line nil
+  			:font yaqub/font-monospace
+  			:inherit '(shadow fixed-pitch)))
 
-       (use-package org
-         :straight t
-         :config
-         (yaqub/org-font-setup)
-         (add-hook 'org-mode-hook 'variable-pitch-mode)
-         (setq org-hide-emphasis-markers t)
-         (setq org-startup-indented t)
-         ;; org-cite-bibliography will be used for all bib-related files
-         (setq org-cite-global-bibliography yaqub/global-bibliography)
-         ;; Enable olivetti on all org buffers
-         (add-hook 'org-mode-hook 'olivetti-mode))
+  (use-package org
+    :straight t
+    :config
+    (yaqub/org-font-setup)
+    (add-hook 'org-mode-hook 'variable-pitch-mode)
+    (setq org-hide-emphasis-markers t)
+    (setq org-startup-indented t)
+    ;; org-cite-bibliography will be used for all bib-related files
+    (setq org-cite-global-bibliography yaqub/global-bibliography)
+    ;; Enable olivetti on all org buffers
+    (add-hook 'org-mode-hook 'olivetti-mode)
+    ;; add keybindings for org-mark-ring-goto at C-c C-<left> and C-c C-<right>
+    (define-key org-mode-map (kbd "C-c <left>") 'org-mark-ring-goto)
+    (define-key org-mode-map (kbd "C-c <right>") 'org-mark-ring-goto)
+    ;; add keybindings for org-mark-ring-push at C-c C-<up> and C-c C-<down>
+    (define-key org-mode-map (kbd "C-c <up>") 'org-mark-ring-push)
+    (define-key org-mode-map (kbd "C-c <down>") 'org-mark-ring-push)
+    )
 #+end_src
 *** Org-roam
-
 Very important.
 #+begin_src emacs-lisp
   (use-package org-roam
@@ -376,25 +386,9 @@ Very important.
   (defun yaqub/org-roam-setup-on-startup ()
     "Open specific roam file and today's daily note side by side on Emacs startup."
     ;; Open the specific roam file
-    (find-file "/Users/yaqub/Orgfiles/roam/00000000000000-home.org")
-    (split-window-right)
-    (other-window 1)
-    ;; Open today's daily note
-    (org-roam-dailies-goto-today))
+    (find-file "/Users/yaqub/Orgfiles/roam/00000000000000-home.org"))
   ;; Add the function to the after-init-hook to ensure it runs after Emacs is fully loaded
   (add-hook 'after-init-hook 'yaqub/org-roam-setup-on-startup)
-#+end_src
-*** Ivy-bibtex
-#+begin_src emacs-lisp
-  (use-package ivy-bibtex
-  :straight t
-  :config
-  (setq bibtex-completion-bibliography yaqub/global-bibliography
-  	bibtex-completion-library-path yaqub/global-library-path
-  	bibtex-completion-pdf-field "file")
-  (ivy-set-actions   
-   'ivy-bibtex
-   '(("e" ivy-bibtex-edit-notes "Edit notes" ivy-bibtex-edit-notes))))
 #+end_src
 *** Citar
 This plugin provides the basic functionality of ~org-ref~, but uses the ~org-cite~ syntax instead of breaking with what's built into emacs.
@@ -402,26 +396,27 @@ This plugin provides the basic functionality of ~org-ref~, but uses the ~org-cit
 #+begin_src emacs-lisp
   (use-package citar
     :straight t
+    :config
+    (global-set-key (kbd "C-c c o") 'citar-open)
+    (global-set-key (kbd "C-c c i") 'citar-insert-citation)
+    (global-set-key (kbd "C-c c n") 'citar-open-notes)
+    (global-set-key (kbd "C-c c r") 'citar-refresh)
     :custom
     (org-cite-insert-processor 'citar)
     (org-cite-follow-processor 'citar)
     (org-cite-activate-processor 'citar)
-    (citar-bibliography org-cite-global-bibliography)
+    (citar-bibliography '("~/Books/References.bib" "~/Articles/References.bib"))
+    (citar-notes-paths '("~/Orgfiles/roam/references/"))
+    (citar-file-note-extensions '("org" "md"))
     :hook
     (LaTeX-mode . citar-capf-setup)
     (org-mode . citar-capf-setup))
+
+  (use-package citar-org-roam
+    :after (citar org-roam)
+    :config (citar-org-roam-mode))
 #+end_src
-*** Org-roam-bibtex
-#+begin_src emacs-lisp
-  (use-package org-roam-bibtex
-    :after org-roam
-    :config
-    (setq orb-preformat-keywords
-        '("citekey" "title" "url" "author-or-editor" "keywords" "file")
-        orb-process-file-keyword t
-        orb-attached-file-extensions '("epub" "pdf"))
-    (org-roam-bibtex-mode))
-#+end_src
+
 *** Org-modern
 Only temporarily re-deploying org-modern, until the font locking issue is fixed in svg-tag-mode (cf. [[https://github.com/rougier/svg-tag-mode/issues/48][issue]])
 
@@ -453,9 +448,112 @@ Only temporarily re-deploying org-modern, until the font locking issue is fixed 
 
   (global-set-key (kbd "C-c N") 'yaqub/org-noter-here)
 #+end_src
+*** Org-mind-map
+Disabled, code [[id:D76D48CF-9534-4FAF-A566-805E2EC3EF4A][here]]
+*** Org publishing sites
+#+begin_src emacs-lisp
+  ;; Custom function to publish Org files with Eleventy frontmatter and customized HTML
+  (defun hcol-org-html-publish-to-html (plist filename pub-dir)
+    (let ((project-name (plist-get plist :publishing-project-name)))
+      (when (string= (hcol-org-roam-get-publish-site filename) project-name)
+        ;; Generate frontmatter
+        (let ((frontmatter (hcol-org-roam-create-eleventy-frontmatter filename)))
+          ;; Customize HTML output
+          (org-publish-org-to 'html filename ".html" (list :with-toc nil :html-preamble frontmatter) pub-dir)))))
+
+  ;; Function to create Eleventy frontmatter from Org properties
+  (defun hcol-org-roam-create-eleventy-frontmatter (filename)
+    "Create Eleventy frontmatter from Org file properties."
+    (with-temp-buffer
+      (insert-file-contents filename)
+      (org-mode)
+      (let* ((title (hcol-org-roam-get-title filename))
+             (date (hcol-org-roam-get-date filename))
+             (id (hcol-org-roam-get-id filename))
+             (layout (or (org-entry-get (point-min) "ELEVENTY_LAYOUT") "post"))
+             (custom-props (hcol-org-roam-get-custom-eleventy-props)))
+        (concat "---\ntitle: " title "\ndate: " date "\nid: " id "\nlayout: " layout "\n" custom-props "---\n"))))
+
+  ;; Function to get Org Roam file title
+  (defun hcol-org-roam-get-title (filename)
+    "Extract the title from the Org file."
+    (with-temp-buffer
+      (insert-file-contents filename)
+      (org-mode)
+      (or (org-entry-get (point-min) "TITLE") (file-name-base filename))))
+
+  ;; Function to get Org Roam file date
+  (defun hcol-org-roam-get-date (filename)
+    "Extract the date from the Org file."
+    (with-temp-buffer
+      (insert-file-contents filename)
+      (org-mode)
+      (or (org-entry-get (point-min) "DATE") (format-time-string "%Y-%m-%d"))))
+
+  ;; Function to get Org Roam file ID
+  (defun hcol-org-roam-get-id (filename)
+    "Extract the ID from the Org file."
+    (with-temp-buffer
+      (insert-file-contents filename)
+      (org-mode)
+      (or (org-entry-get (point-min) "ID") (file-name-nondirectory filename))))
+
+  ;; Function to get custom Eleventy properties from Org file
+  (defun hcol-org-roam-get-custom-eleventy-props ()
+    "Extract custom Eleventy properties from Org file."
+    (with-temp-buffer
+      (insert-file-contents (buffer-file-name))
+      (org-mode)
+      (let ((props '()))
+        (org-map-entries
+         (lambda ()
+           (let ((key (org-entry-get (point) "ELEVENTY"))
+                 (value (org-entry-get (point) "ELEVENTY")))
+             (when key
+               (push (format "%s: %s" (substring key 9) value) props)))))
+        (mapconcat 'identity props "\n"))))
+
+  ;; Function to get the PUBLISH_SITE property
+  (defun hcol-org-roam-get-publish-site (filename)
+    "Read the PUBLISH_SITE property from the given file."
+    (with-temp-buffer
+      (insert-file-contents filename)
+      (org-mode)
+      (org-entry-get (point-min) "PUBLISH_SITE")))
+
+  ;; Configuration for org-publish-project-alist
+  (setq org-publish-project-alist
+        '(("jpw24.hcol.uk"
+           :base-directory "~/Orgfiles/roam"
+           :publishing-directory "~/Development/hcol/jpw24.hcol.uk"
+           :publishing-function hcol-org-html-publish-to-html
+           :publishing-project-name "jpw24.hcol.uk")
+          ("hcol.uk"
+           :base-directory "~/Orgfiles/roam"
+           :publishing-directory "~/Development/hcol/hcol.uk"
+           :publishing-function hcol-org-html-publish-to-html
+           :publishing-project-name "hcol.uk")))
+#+end_src
+
 *** Making sure org links open in the same window
 #+begin_src emacs-lisp
     (setq org-link-frame-setup '((file . find-file)))
+#+end_src
+*** Lecture notes
+#+begin_src emacs-lisp
+  (defun org-insert-lecture-notes ()
+    "Create a new Org-roam node for lecture notes and link it in the current buffer."
+    (interactive)
+    (let* ((current-node (org-roam-node-read)) ; Get the current Org-roam node
+           (current-node-title (org-roam-node-title current-node)) ; Get the title of the current node
+           (date-string (format-time-string "%Y-%m-%d")) ; Get the current date in longform
+           (new-node-title (format "%s - %s" current-node-title date-string)) ; Create the new node title
+           (description (read-string "Enter description: ")) ; Prompt for description
+           (new-node (org-roam-capture- :node (org-roam-node-create :title new-node-title) ; Create the new node
+                                        :templates '(("d" "default" "* %?" :if-new (file+head "${slug}.org" "#+title: ${title}\n")))))
+           (new-node-link (org-link-make-string (concat "id:" (org-roam-node-id new-node)) new-node-title))) ; Create a link to the new node
+      (insert (format "** %s - %s\n" new-node-link description)))) ; Insert the new heading with the link and description
+
 #+end_src
 * Reading
 ** Using PDF-Tools instead of DocView
@@ -471,11 +569,29 @@ Only temporarily re-deploying org-modern, until the font locking issue is fixed 
 
     ;; Set pdf-view-mode as the default for PDF files
     (add-to-list 'auto-mode-alist '("\\.pdf\\'" . pdf-view-mode))
-
+    (setq pdf-cache-prefetch-delay 0.1)
     ;; Optional: open PDFs in a new frame by default
     ;; (setq pdf-view-use-new-open t)
+    ;; set keybindings
+    ;; s-left: image-forward-hscroll 5
+    ;; s-right: image-backward-hscroll 5
+    ;; s-up: image-previous-line 5
+    ;; s-down: image-next-line 5
+    (define-key pdf-view-mode-map (kbd "s-<left>") 'image-forward-hscroll)
+    (define-key pdf-view-mode-map (kbd "s-<right>") 'image-backward-hscroll)
+    (define-key pdf-view-mode-map (kbd "s-<up>") 'image-previous-line)
+    (define-key pdf-view-mode-map (kbd "s-<down>") 'image-next-line)
+    ;; ok now make it scroll 5x faster
+    (define-key pdf-view-mode-map (kbd "C-s-<left>") (lambda () (interactive) (image-forward-hscroll 5)))
+    (define-key pdf-view-mode-map (kbd "C-s-<right>") (lambda () (interactive) (image-backward-hscroll 5)))
+    (define-key pdf-view-mode-map (kbd "C-s-<up>") (lambda () (interactive) (image-previous-line 5)))
+    (define-key pdf-view-mode-map (kbd "C-s-<down>") (lambda () (interactive) (image-next-line 5)))
   )
 #+end_src
+
+#+RESULTS:
+: t
+
 ** /nov.el/ support
 Using nov.el for epub reading
 #+begin_src emacs-lisp
@@ -512,29 +628,24 @@ Use calibre db.
     (setq calibredb-db-dir (expand-file-name "metadata.db" calibredb-root-dir))
     (evil-set-initial-state 'calibredb-search-mode 'emacs))
 #+end_src
-** Integrate with Zotero
-#+begin_src emacs-lisp
-  (defun zotra-download-attachment-for-current-entry ()
-    (interactive)
-    (save-excursion
-      (bibtex-beginning-of-entry)
-      (let* ((entry (bibtex-parse-entry t))
-             (key (cdr (assoc "=key=" entry)))
-             (url (cdr (assoc "url" entry)))
-             (filename (concat key ".pdf"))
-             (filename (when entry
-                         (zotra-download-attachment-from-url
-                          url nil filename))))
-        (when filename
-          (bibtex-make-field (list "File" nil filename) t)))))
+** Text-to-speech 
+#+begin_src emacs-lisp 
+  (defun macos-speak-region (start end)
+    "Speak text between START and END using macOS's say command."
+    (interactive "r")
+    (shell-command-on-region start end "say"))
 
-  (use-package zotra
-    :straight t
-    :config
-    (setq zotra-cli-command '("node" "~/Development/zotra-cli/bin/index.js"))
-    (add-hook 'zotra-after-get-bibtex-entry-hook
-  	    'zotra-download-attachment-for-current-entry))
+  (defun macos-speak-buffer ()
+    "Speak the entire buffer using macOS's say command."
+    (interactive)
+    (macos-speak-region (point-min) (point-max)))
+
+  (global-set-key (kbd "C-c s") 'macos-speak-region)
+  (global-set-key (kbd "C-c M-s") 'macos-speak-buffer)
 #+end_src
+
+* EAF
+Disabled, old code [[id:9073108A-6DBD-4411-9CEF-03C78ED67754][here]].
 * macOS
 ** macOS fullscreen
 #+begin_src emacs-lisp 
@@ -547,13 +658,6 @@ I'm using mitsuharu emacs now, so I'll set mouse scrolling to behave according t
   (setq mac-mouse-wheel-smooth-scroll t)
 #+end_src
 
-** Getting passwords from macOS keychain
-Here, I'm declaring two new functions that use Apple's ~security~ command to access passwords in the macOS keychain. I can add Keychain entries with [[elisp:(shell-command "open '/System/Applications/Utilities/Keychain Access.app'")][Keychain Access]].
-
-#+begin_src emacs-lisp
-  (use-package ns-keychain
-    :straight (:host github :repo "yaqubroli/ns-keychain.el"))
-#+end_src
 ** Property lists
 OSX Plist is a library for reading and writing property lists (`.plist` files) as used in OS X.
 
@@ -583,7 +687,6 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
 #+END_SRC
 * AI Tools
 Currently, this is in a later part of the config because of my ~ns-keychain~ functions that I'm using for the username and password(s) and API keys and stuff. Dunno if this is the best idea.
-** /org-ai/
 ** Github Copilot
 A lot of the functions here are stolen and very-slightly-modified from Robert Krahn's [[https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup][blog post]] on setting up Copilot in emacs.
 
@@ -614,6 +717,9 @@ A lot of the functions here are stolen and very-slightly-modified from Robert Kr
       (copilot-complete)))
 #+end_src 
 
+#+RESULTS:
+: yaqub/copilot-complete-or-accept
+
 * Minibuffer Shortcuts
 #+begin_src emacs-lisp 
   ;; the command "eval-init" evaluates init.el
@@ -624,24 +730,17 @@ A lot of the functions here are stolen and very-slightly-modified from Robert Kr
   ;; the command "home" opens dired at ~/
   (defun home ()
     (interactive)
-    (dired "~/"))
-
-  ;; the command "dev" opens dired at ~/Development
-  (defun dev ()
-    (interactive)
-    (dired "~/Development"))
-
-  ;; the command "org" opens dired at ~/Orgfiles
-  (defun org ()
-    (interactive)
-    (dired "~/Orgfiles"))
+    (find-file "~/Orgfiles/roam/00000000000000-home.org"))
 
   ;; the command "yaqubmacs" opens dired at ~/Development/yaqubmacs
   (defun yaqubmacs ()
     (interactive)
     (dired "~/Development/yaqubmacs"))
+#+end_src
+* St Andrews Mode
 
-  (defun bib ()
-    (interactive)
-    (ivy-bibtex))
+#+begin_src emacs-lisp
+  ;; eval org-st-andrews-mode.el from ~/.emacs.d
+  (load-file "~/.emacs.d/org-st-andrews-mode.el")
+
 #+end_src
