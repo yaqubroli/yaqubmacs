@@ -555,6 +555,30 @@ Disabled, code [[id:D76D48CF-9534-4FAF-A566-805E2EC3EF4A][here]]
       (insert (format "** %s - %s\n" new-node-link description)))) ; Insert the new heading with the link and description
 
 #+end_src
+** Setup LaTeX
+*** Function that automatically makes latex files
+#+begin_src emacs-lisp 
+  (defun nlatex ()
+    "Create a new LaTeX file in '~/Homework/LaTeX/', named with the current date and a user-provided string, and insert the 'ndoc' yasnippet."
+    (interactive)
+    (let* ((base-dir "~/Homework/LaTeX/")
+           (date-str (format-time-string "%Y%m%d"))
+           (name (read-string "Enter file name: "))
+           (sanitized-name (replace-regexp-in-string "[^[:alnum:]]" "-" name))
+           (filename (format "%s%s-%s.tex" base-dir date-str sanitized-name)))
+      (unless (file-exists-p base-dir)
+        (make-directory base-dir t))
+      (find-file filename)
+      (yas-expand-snippet (yas-lookup-snippet "ndoc"))))
+
+#+end_src
+** LaTeX preview pane
+#+begin_src emacs-lisp 
+  (use-package latex-preview-pane
+    :config
+    (latex-preview-pane-enable))
+#+end_src
+
 * Reading
 ** Using PDF-Tools instead of DocView
 #+begin_src emacs-lisp 
@@ -649,7 +673,7 @@ Use calibre db.
     (interactive)
     (when (eq major-mode 'pdf-view-mode)
       (let ((text (pdf-view-active-region-text)))
-        (unless (string-blank-p text)
+        (unless (or (null text) (seq-every-p 'string-blank-p text))
           (with-temp-buffer
             (insert (mapconcat 'identity text " "))
             (shell-command-on-region (point-min) (point-max) "say"))))))
@@ -660,8 +684,7 @@ Use calibre db.
     (interactive)
     (when (eq major-mode 'pdf-view-mode)
       (let ((text (pdf-view-active-region-text)))
-        (if (string-blank-p (car text))
-            (message "No text selected or empty page")
+        (unless (or (null text) (seq-every-p 'string-blank-p text))
           (with-temp-buffer
             (insert (mapconcat 'identity text " "))
             (shell-command-on-region (point-min) (point-max) "say"))))))
@@ -674,7 +697,6 @@ Use calibre db.
     (define-key pdf-view-mode-map (kbd "C-c s") 'macos-speak-pdf-selection)
     (define-key pdf-view-mode-map (kbd "C-c M-s") 'macos-speak-pdf-page))
 #+end_src
-
 * EAF
 Disabled, old code [[id:9073108A-6DBD-4411-9CEF-03C78ED67754][here]].
 * macOS
@@ -730,8 +752,7 @@ A lot of the functions here are stolen and very-slightly-modified from Robert Kr
     (define-key copilot-mode-map (kbd "C-s-<prior>") #'copilot-previous-completion)
     (define-key copilot-mode-map (kbd "C-s-<right>") #'copilot-accept-completion-by-word)
     (define-key copilot-mode-map (kbd "C-s-<down>") #'copilot-accept-completion-by-line)
-    (define-key global-map (kbd "C-s-<return>") #'yaqub/copilot-complete-or-accept)
-    :hook (prog-mode . copilot-mode))
+    (define-key global-map (kbd "C-s-<return>") #'yaqub/copilot-complete-or-accept))
 
   (defun yaqub/copilot-complete-or-accept ()
     "Command that either triggers a completion or accepts one if one
