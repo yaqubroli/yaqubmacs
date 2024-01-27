@@ -659,7 +659,9 @@ Use calibre db.
     "Speak text between START and END using macOS's say command."
     (interactive "r")
     (unless (eq major-mode 'pdf-view-mode)
-      (shell-command-on-region start end "say")))
+      (let ((text (buffer-substring-no-properties start end)))
+        (start-process-shell-command "macos-speak" nil "say" text)
+        (deactivate-mark))))
 
   ;; Function to speak the entire buffer
   (defun macos-speak-buffer ()
@@ -672,22 +674,19 @@ Use calibre db.
     "Speak the selected text in a PDF opened with pdf-tools."
     (interactive)
     (when (eq major-mode 'pdf-view-mode)
-      (let ((text (pdf-view-active-region-text)))
-        (unless (or (null text) (seq-every-p 'string-blank-p text))
-          (with-temp-buffer
-            (insert (mapconcat 'identity text " "))
-            (shell-command-on-region (point-min) (point-max) "say"))))))
+      (let ((text (mapconcat 'identity (pdf-view-active-region-text) " ")))
+        (unless (string-blank-p text)
+          (start-process-shell-command "macos-speak" nil "say" text)
+          (pdf-view-deactivate-region)))))
 
   ;; Function to speak the entire text of the current PDF page
   (defun macos-speak-pdf-page ()
     "Speak the text of the current PDF page."
     (interactive)
     (when (eq major-mode 'pdf-view-mode)
-      (let ((text (pdf-view-active-region-text)))
-        (unless (or (null text) (seq-every-p 'string-blank-p text))
-          (with-temp-buffer
-            (insert (mapconcat 'identity text " "))
-            (shell-command-on-region (point-min) (point-max) "say"))))))
+      (let ((text (mapconcat 'identity (pdf-view-active-region-text) " ")))
+        (unless (string-blank-p text)
+          (start-process-shell-command "macos-speak" nil "say" text)))))
 
   ;; Keybindings
   (global-set-key (kbd "C-c s") 'macos-speak-region)
@@ -697,6 +696,7 @@ Use calibre db.
     (define-key pdf-view-mode-map (kbd "C-c s") 'macos-speak-pdf-selection)
     (define-key pdf-view-mode-map (kbd "C-c M-s") 'macos-speak-pdf-page))
 #+end_src
+
 * EAF
 Disabled, old code [[id:9073108A-6DBD-4411-9CEF-03C78ED67754][here]].
 * macOS
