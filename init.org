@@ -144,9 +144,6 @@ Minions is a package for managing and organizing minor-mode lighters in the mode
     (minions-mode 1))
 #+end_src
 
-#+RESULTS:
-: t
-
 ** Setup Olivetti-mode
 We'll enable olivetti mode whenever we enter org mode.
 #+begin_src emacs-lisp
@@ -448,114 +445,57 @@ Only temporarily re-deploying org-modern, until the font locking issue is fixed 
 
   (global-set-key (kbd "C-c N") 'yaqub/org-noter-here)
 #+end_src
-*** Org-mind-map
-Disabled, code [[id:D76D48CF-9534-4FAF-A566-805E2EC3EF4A][here]]
-*** Org publishing sites
-#+begin_src emacs-lisp
-  ;; Custom function to publish Org files with Eleventy frontmatter and customized HTML
-  (defun hcol-org-html-publish-to-html (plist filename pub-dir)
-    (let ((project-name (plist-get plist :publishing-project-name)))
-      (when (string= (hcol-org-roam-get-publish-site filename) project-name)
-        ;; Generate frontmatter
-        (let ((frontmatter (hcol-org-roam-create-eleventy-frontmatter filename)))
-          ;; Customize HTML output
-          (org-publish-org-to 'html filename ".html" (list :with-toc nil :html-preamble frontmatter) pub-dir)))))
-
-  ;; Function to create Eleventy frontmatter from Org properties
-  (defun hcol-org-roam-create-eleventy-frontmatter (filename)
-    "Create Eleventy frontmatter from Org file properties."
-    (with-temp-buffer
-      (insert-file-contents filename)
-      (org-mode)
-      (let* ((title (hcol-org-roam-get-title filename))
-             (date (hcol-org-roam-get-date filename))
-             (id (hcol-org-roam-get-id filename))
-             (layout (or (org-entry-get (point-min) "ELEVENTY_LAYOUT") "post"))
-             (custom-props (hcol-org-roam-get-custom-eleventy-props)))
-        (concat "---\ntitle: " title "\ndate: " date "\nid: " id "\nlayout: " layout "\n" custom-props "---\n"))))
-
-  ;; Function to get Org Roam file title
-  (defun hcol-org-roam-get-title (filename)
-    "Extract the title from the Org file."
-    (with-temp-buffer
-      (insert-file-contents filename)
-      (org-mode)
-      (or (org-entry-get (point-min) "TITLE") (file-name-base filename))))
-
-  ;; Function to get Org Roam file date
-  (defun hcol-org-roam-get-date (filename)
-    "Extract the date from the Org file."
-    (with-temp-buffer
-      (insert-file-contents filename)
-      (org-mode)
-      (or (org-entry-get (point-min) "DATE") (format-time-string "%Y-%m-%d"))))
-
-  ;; Function to get Org Roam file ID
-  (defun hcol-org-roam-get-id (filename)
-    "Extract the ID from the Org file."
-    (with-temp-buffer
-      (insert-file-contents filename)
-      (org-mode)
-      (or (org-entry-get (point-min) "ID") (file-name-nondirectory filename))))
-
-  ;; Function to get custom Eleventy properties from Org file
-  (defun hcol-org-roam-get-custom-eleventy-props ()
-    "Extract custom Eleventy properties from Org file."
-    (with-temp-buffer
-      (insert-file-contents (buffer-file-name))
-      (org-mode)
-      (let ((props '()))
-        (org-map-entries
-         (lambda ()
-           (let ((key (org-entry-get (point) "ELEVENTY"))
-                 (value (org-entry-get (point) "ELEVENTY")))
-             (when key
-               (push (format "%s: %s" (substring key 9) value) props)))))
-        (mapconcat 'identity props "\n"))))
-
-  ;; Function to get the PUBLISH_SITE property
-  (defun hcol-org-roam-get-publish-site (filename)
-    "Read the PUBLISH_SITE property from the given file."
-    (with-temp-buffer
-      (insert-file-contents filename)
-      (org-mode)
-      (org-entry-get (point-min) "PUBLISH_SITE")))
-
-  ;; Configuration for org-publish-project-alist
-  (setq org-publish-project-alist
-        '(("jpw24.hcol.uk"
-           :base-directory "~/Orgfiles/roam"
-           :publishing-directory "~/Development/hcol/jpw24.hcol.uk"
-           :publishing-function hcol-org-html-publish-to-html
-           :publishing-project-name "jpw24.hcol.uk")
-          ("hcol.uk"
-           :base-directory "~/Orgfiles/roam"
-           :publishing-directory "~/Development/hcol/hcol.uk"
-           :publishing-function hcol-org-html-publish-to-html
-           :publishing-project-name "hcol.uk")))
-#+end_src
-
 *** Making sure org links open in the same window
 #+begin_src emacs-lisp
     (setq org-link-frame-setup '((file . find-file)))
 #+end_src
-*** Lecture notes
-#+begin_src emacs-lisp
-  (defun org-insert-lecture-notes ()
-    "Create a new Org-roam node for lecture notes and link it in the current buffer."
-    (interactive)
-    (let* ((current-node (org-roam-node-read)) ; Get the current Org-roam node
-           (current-node-title (org-roam-node-title current-node)) ; Get the title of the current node
-           (date-string (format-time-string "%Y-%m-%d")) ; Get the current date in longform
-           (new-node-title (format "%s - %s" current-node-title date-string)) ; Create the new node title
-           (description (read-string "Enter description: ")) ; Prompt for description
-           (new-node (org-roam-capture- :node (org-roam-node-create :title new-node-title) ; Create the new node
-                                        :templates '(("d" "default" "* %?" :if-new (file+head "${slug}.org" "#+title: ${title}\n")))))
-           (new-node-link (org-link-make-string (concat "id:" (org-roam-node-id new-node)) new-node-title))) ; Create a link to the new node
-      (insert (format "** %s - %s\n" new-node-link description)))) ; Insert the new heading with the link and description
-
-#+end_src
 ** Setup LaTeX
+*** Set up AucTeX
+#+begin_src emacs-lisp 
+  (use-package auctex
+    :ensure t
+    :mode ("\\.tex\\'" . LaTeX-mode)
+    :config
+    (setq TeX-auto-save t)
+    (setq TeX-parse-self t)
+    (setq-default TeX-master nil)
+
+    (add-hook 'LaTeX-mode-hook 'visual-line-mode)
+    (add-hook 'LaTeX-mode-hook 'flyspell-mode)
+    (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+
+    (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+    (setq reftex-plug-into-AUCTeX t)
+    (setq TeX-PDF-mode t)
+
+    ;; Use Biber with AUCTeX
+    (setq TeX-command-BibTeX "Biber"))
+
+     ;; Function to compile LaTeX and refresh PDF view
+  (defun my-latex-compile ()
+    "Compile LaTeX and refresh PDF view."
+    (interactive)
+    (let ((pdf-file (concat (file-name-sans-extension (TeX-master-file)) ".pdf")))
+      (TeX-save-document (TeX-master-file))
+      (TeX-command "LaTeX" 'TeX-master-file)
+      ;; Refresh PDF buffer if it's open
+      (when (get-buffer pdf-file)
+        (with-current-buffer pdf-file
+          (revert-buffer t t t)))))
+    
+  ;; Hook to auto-compile on save and view PDF
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (add-hook 'after-save-hook (lambda () (message "saved!")) nil 'make-it-local)))
+
+  (add-hook 'TeX-mode-hook
+            (lambda ()
+              (add-hook 'after-save-hook (lambda () (message "saved!")) nil 'make-it-local)))
+#+end_src
+
+#+RESULTS:
+| lambda | nil | (add-hook 'after-save-hook (lambda nil (message saved!)) nil 'make-it-local) |
+
 *** Function that automatically makes latex files
 #+begin_src emacs-lisp 
   (defun nlatex ()
@@ -572,13 +512,27 @@ Disabled, code [[id:D76D48CF-9534-4FAF-A566-805E2EC3EF4A][here]]
       (yas-expand-snippet (yas-lookup-snippet "ndoc"))))
 
 #+end_src
-** LaTeX preview pane
+*** Function that gives word count of latex file
 #+begin_src emacs-lisp 
-  (use-package latex-preview-pane
-    :config
-    (latex-preview-pane-enable))
-#+end_src
+  (defun lwc ()
+    "Counts words in a PDF file corresponding to a .tex file or directly in a PDF file."
+    (interactive)
+    (let* ((file-name (buffer-file-name))
+           (extension (file-name-extension file-name))
+           (base-name (file-name-sans-extension file-name)))
+      (cond ((string-equal extension "tex")
+             (let ((pdf-file (concat base-name ".pdf")))
+               ;; Compile .tex to .pdf if necessary. This step might need customization.
+               ;; (shell-command (concat "pdflatex " file-name))
+               ;; Now count the words in the PDF.
+               (if (file-exists-p pdf-file)
+                   (shell-command (concat "pdftotext " pdf-file " - | wc -w"))
+                 (message "PDF file does not exist. Please compile your LaTeX file first."))))
+            ((string-equal extension "pdf")
+             (shell-command (concat "pdftotext " file-name " - | wc -w")))
+            (t (message "This function is only intended for .tex and .pdf files.")))))
 
+#+end_src
 * Reading
 ** Using PDF-Tools instead of DocView
 #+begin_src emacs-lisp 
@@ -659,8 +613,8 @@ Use calibre db.
     "Speak text between START and END using macOS's say command."
     (interactive "r")
     (unless (eq major-mode 'pdf-view-mode)
-      (let ((text (buffer-substring-no-properties start end)))
-        (start-process-shell-command "macos-speak" nil "say" text)
+      (let ((text (shell-quote-argument (buffer-substring-no-properties start end))))
+        (start-process-shell-command "macos-speak" nil (concat "say " text))
         (deactivate-mark))))
 
   ;; Function to speak the entire buffer
@@ -676,7 +630,7 @@ Use calibre db.
     (when (eq major-mode 'pdf-view-mode)
       (let ((text (mapconcat 'identity (pdf-view-active-region-text) " ")))
         (unless (string-blank-p text)
-          (start-process-shell-command "macos-speak" nil "say" text)
+          (start-process-shell-command "macos-speak" nil (concat "say " (shell-quote-argument text)))
           (pdf-view-deactivate-region)))))
 
   ;; Function to speak the entire text of the current PDF page
@@ -686,7 +640,7 @@ Use calibre db.
     (when (eq major-mode 'pdf-view-mode)
       (let ((text (mapconcat 'identity (pdf-view-active-region-text) " ")))
         (unless (string-blank-p text)
-          (start-process-shell-command "macos-speak" nil "say" text)))))
+          (start-process-shell-command "macos-speak" nil (concat "say " (shell-quote-argument text)))))))
 
   ;; Keybindings
   (global-set-key (kbd "C-c s") 'macos-speak-region)
@@ -788,11 +742,4 @@ A lot of the functions here are stolen and very-slightly-modified from Robert Kr
   (defun yaqubmacs ()
     (interactive)
     (dired "~/Development/yaqubmacs"))
-#+end_src
-* St Andrews Mode
-
-#+begin_src emacs-lisp
-  ;; eval org-st-andrews-mode.el from ~/.emacs.d
-  (load-file "~/.emacs.d/org-st-andrews-mode.el")
-
 #+end_src
