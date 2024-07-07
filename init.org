@@ -62,25 +62,55 @@ Backup files in a hidden ~.saves~ directory, so they don't cloud up ~ls~
 
   (add-hook 'after-save-hook 'yaqub/tangle-if-org-in-yaqubmacs)
 #+end_src
+
+* Authentication using authinfo
+#+begin_src emacs-lisp
+  (use-package auth-source
+    :config
+    ;; Optionally, specify the path to your authinfo file if it's not in the default location
+    (setq auth-sources '("~/.authinfo"))
+    
+    ;; Function to easily retrieve passwords
+    (defun my-get-password (host user)
+      (let ((creds (auth-source-user-and-password host user)))
+        (if creds
+            (nth 1 creds)
+          (error "No credentials found for %s@%s" user host))))
+    
+    ;; Function to easily retrieve API keys or passwords
+    (defun my-get-api-key (host)
+      (let ((creds (auth-source-search :host host :max 1)))
+        (if creds
+            (funcall (plist-get (car creds) :secret))
+          (error "No API key found for %s" host))))
+    
+    ;; Example usage for setting a variable (adjust the variable name as needed)
+    ;; (setq some-service-api-key (my-get-api-key "example.com"))
+  )
+
+#+end_src
 * Aesthetics
 This section deals with the aesthetic aspects of our Emacs setup.
 ** Define fonts
 #+begin_src emacs-lisp
-  (setq yaqub/font-monospace "Iosevka")
+  (setq yaqub/font-monospace "Vulf Mono")
   (setq yaqub/font-variable-serif "CMU Serif")
-  (setq yaqub/font-variable-sans "CMU Bright")
-  
+  (setq yaqub/font-variable-sans "Vulf Sans")
+
   ;; Ok, now define fonts on emacs' end
-  (set-face-attribute 'default nil :font yaqub/font-monospace :height 180)
+  (set-face-attribute 'default nil :font yaqub/font-monospace :height 140)
+  (set-face-attribute 'fixed-pitch nil :font yaqub/font-monospace :height 140)
   (set-face-attribute 'variable-pitch nil :font yaqub/font-variable-serif :inherit 'default) 
 #+end_src
+
+
 ** UI Changes
 #+begin_src emacs-lisp
-  (menu-bar-mode -1)
+  (menu-bar-mode 1)
   (toggle-scroll-bar -1)
   (tool-bar-mode -1)
   (set-frame-font
-   (format "%s-%d" yaqub/font-monospace 18)
+   (format "%s-%d" yaqub/font-monospace 14)
    nil t)
 #+end_src
 
@@ -92,11 +122,15 @@ We can also do a transparent title bar on macOS:
 #+end_src
 ** Install and Enable angloid-theme
 #+begin_src emacs-lisp
-  (use-package atom-one-dark-theme
-    :straight t
-    :config
-    (load-theme 'atom-one-dark t))
+   (use-package tao-theme
+     :straight t
+     :config
+     (load-theme 'tao-yin t))
 #+end_src
+
+#+RESULTS:
+: t
+
 ** Setup all-the-icons
 All-the-icons is a package to use icons in your Emacs.
 
@@ -215,6 +249,7 @@ Evil-mode provides Vim keybindings in Emacs.
     (setq evil-want-integration t)
     (setq evil-want-keybinding nil)
     (setq evil-want-C-u-scroll t)
+    (setq evil-undo-system 'undo-redo)
     :config
     (evil-mode 1)
     (advice-add 'evil-quit :around 'yaqub/jump-to-scratch-or-quit))
@@ -225,6 +260,7 @@ Evil-mode provides Vim keybindings in Emacs.
     :config
     (evil-collection-init))
 #+end_src
+
 **** Multiple cursors in evil-mode
 #+begin_src emacs-lisp
   (use-package evil-mc
@@ -248,7 +284,21 @@ This section is about setting up tools to help us write code more efficiently.
 #+begin_src emacs-lisp
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 #+end_src
+** Enable whitespace cleanup in prog-mode
+#+begin_src emacs-lisp
+    ;; Define a function to clean up whitespace in the buffer
+    (defun yaqub/cleanup-buffer-whitespace ()
+      "Clean up whitespace in the buffer, including converting tabs to spaces."
+      (interactive)
+      (whitespace-cleanup))
 
+    ;; Define a function to set the key binding in programming modes
+    (defun yaqub/set-cleanup-whitespace-key ()
+      (local-set-key (kbd "C-c w") 'yaqub/cleanup-buffer-whitespace))
+
+    ;; Add the key binding function to the prog-mode-hook
+    (add-hook 'prog-mode-hook 'yaqub/set-cleanup-whitespace-key) 
+#+end_src
 ** Setup Yasnippet
 Yasnippet is a template system for Emacs.
 
@@ -277,6 +327,14 @@ Company-box is a frontend for company-mode, it provides a dropdown menu interfac
     :straight t
     :hook (company-mode . company-box-mode))
 #+end_src
+
+** Setup Editorconfig 
+#+begin_src emacs-lisp 
+  (use-package editorconfig
+    :ensure t
+    :config
+    (editorconfig-mode 1))
+#+end_src
 ** Magit
 Magit is an interface to the version control system Git, implemented as an Emacs package. It aspires to be a complete Git porcelain.
 
@@ -285,20 +343,18 @@ Magit is an interface to the version control system Git, implemented as an Emacs
   :straight t
   :bind (("C-x g" . magit-status)))
 #+end_src
-** Javascript
-#+begin_src emacs-lisp 
-  (add-hook 'js-mode-hook
-  	  (lambda ()
-  	    (setq js-indent-level 2)
-  	    (setq indent-tabs-mode nil)))
+** Applescript
+#+begin_src emacs-lisp
+  (use-package applescript-mode
+    :straight (applescript-mode :type git :host github :repo "emacsorphanage/applescript-mode"))
 #+end_src
+
 * Writing
 This section is about setting up tools to help us write prose more efficiently; mostly org config.
 ** Global bibliography variables
 #+begin_src emacs-lisp 
-  (setq yaqub/global-bibliography '("~/Books/References.bib"
-  			   "~/Articles/References.bib")
-        yaqub/global-library-path '("~/Books/" "~/Articles/")
+  (setq yaqub/global-bibliography '("~/Zotero/References.bib")
+        yaqub/global-library-path '("~/Zotero")
         yaqub/global-notes-path "~/Orgfiles/roam/references/")
 #+end_src
 ** Setup Org
@@ -310,7 +366,7 @@ Here, we separate the org setup into its own function for clarity.
     (dolist (level (number-sequence 1 8))
   	     (let* ((org-level-face (intern (format "org-level-%d" level))))
   	     (set-face-attribute org-level-face nil
-  				 :font yaqub/font-variable-serif
+  				 :font yaqub/font-monospace
   				 :foreground (face-attribute 'default :foreground)
   				 :weight (if (= level 1) 'bold 'normal)
   				 :height 1.0)))
@@ -339,7 +395,6 @@ Here, we separate the org setup into its own function for clarity.
     :straight t
     :config
     (yaqub/org-font-setup)
-    (add-hook 'org-mode-hook 'variable-pitch-mode)
     (setq org-hide-emphasis-markers t)
     (setq org-startup-indented t)
     ;; org-cite-bibliography will be used for all bib-related files
@@ -354,6 +409,10 @@ Here, we separate the org setup into its own function for clarity.
     (define-key org-mode-map (kbd "C-c <down>") 'org-mark-ring-push)
     )
 #+end_src
+
+#+RESULTS:
+: t
+
 *** Org-roam
 Very important.
 #+begin_src emacs-lisp
@@ -361,17 +420,6 @@ Very important.
     :straight t
     :custom
     (org-roam-directory "~/Orgfiles/roam")
-    :config
-    (setq org-roam-capture-templates
-          '(("d" "default" plain
-     "%?"
-     :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-     :unnarrowed t)
-            
-            ("r" "bibliography reference" plain
-             (file "~/Orgfiles/roam/templates/orb.org")
-             :target
-             (file+head "references/${citekey}.org" "#+title: ${title}\n"))))
     :bind (("C-c n f" . org-roam-node-find)
            ("C-c n i" . org-roam-node-insert)
            ("C-c n g" . org-roam-graph)
@@ -402,7 +450,7 @@ This plugin provides the basic functionality of ~org-ref~, but uses the ~org-cit
     (org-cite-insert-processor 'citar)
     (org-cite-follow-processor 'citar)
     (org-cite-activate-processor 'citar)
-    (citar-bibliography '("~/Books/References.bib" "~/Articles/References.bib"))
+    (citar-bibliography '("~/Zotero/References.bib"))
     (citar-notes-paths '("~/Orgfiles/roam/references/"))
     (citar-file-note-extensions '("org" "md"))
     :hook
@@ -533,6 +581,15 @@ Only temporarily re-deploying org-modern, until the font locking issue is fixed 
             (t (message "This function is only intended for .tex and .pdf files.")))))
 
 #+end_src
+** Setup Pandoc
+#+begin_src emacs-lisp
+  (use-package pandoc
+    :straight (pandoc :type git :host github :repo "yaqubroli/pandoc.el")
+    :config
+    (setq pandoc-citation-styles-dir "~/Homework/styles/")
+    )
+#+end_src
+
 * Reading
 ** Using PDF-Tools instead of DocView
 #+begin_src emacs-lisp 
@@ -650,6 +707,89 @@ Use calibre db.
     (define-key pdf-view-mode-map (kbd "C-c s") 'macos-speak-pdf-selection)
     (define-key pdf-view-mode-map (kbd "C-c M-s") 'macos-speak-pdf-page))
 #+end_src
+** Reading Tracker
+Integrates with my website
+#+begin_src emacs-lisp 
+  (defun update-org-tracker-progress ()
+    "Update :TRACKER_PROGRESS: in the associated org file with the current page and total pages of the PDF."
+    (interactive)
+    (let* ((current-buffer (buffer-name))
+           (org-file-buffer (if (string-suffix-p ".pdf" current-buffer)
+                                (find-buffer-visiting (concat (file-name-sans-extension current-buffer) ".org"))
+                              (let ((pdf-buffer (concat (file-name-sans-extension (buffer-name)) ".pdf")))
+                                (if (get-buffer pdf-buffer)
+                                    (current-buffer)))))
+           (pdf-file-buffer (if (string-suffix-p ".pdf" current-buffer)
+                                current-buffer
+                              (concat (file-name-sans-extension (buffer-name)) ".pdf"))))
+      (if org-file-buffer
+          (with-current-buffer org-file-buffer
+            (save-excursion
+              (goto-char (point-min))
+              (let ((tracker-progress-exists (re-search-forward "^:TRACKER_PROGRESS:" nil t)))
+                (goto-char (point-min))
+                (unless (re-search-forward "^:TRACKER_PUBLISHED:" nil t)
+                  (goto-char (point-max))
+                  (insert "\n:TRACKER_PUBLISHED: " (completing-read "Is the tracker published? (YES/NO): " '("YES" "NO"))))
+                (if (get-buffer pdf-file-buffer)
+                    (with-current-buffer pdf-file-buffer
+                      (let* ((pdf-info (pdf-info-number-of-pages))
+                             (current-page (pdf-view-current-page)))
+                        (with-current-buffer org-file-buffer
+                          (goto-char (point-max))
+                          (if tracker-progress-exists
+                              (re-search-backward "^:TRACKER_PROGRESS:" nil t)
+                            (insert "\n:TRACKER_PROGRESS: "))
+                          (insert (format "[%d/%d]" current-page pdf-info))))
+                  (message "PDF buffer is not open"))))))
+        (message "No associated org file is open."))))
+
+  (defun goto-org-tracker-progress ()
+    "Go to the page specified in :TRACKER_PROGRESS: in the associated PDF file."
+    (interactive)
+    (let* ((current-buffer (buffer-name))
+           (pdf-file-buffer (if (string-suffix-p ".org" current-buffer)
+                                (concat (file-name-sans-extension current-buffer) ".pdf")
+                              (let ((org-buffer (concat (file-name-sans-extension (buffer-name)) ".org")))
+                                (if (get-buffer org-buffer)
+                                    current-buffer)))))
+           (org-file-buffer (if (string-suffix-p ".org" current-buffer)
+                                current-buffer
+                              (concat (file-name-sans-extension (buffer-name)) ".org"))))
+      (if (and org-file-buffer pdf-file-buffer)
+          (with-current-buffer org-file-buffer
+            (save-excursion
+              (goto-char (point-min))
+              (if (re-search-forward "^:TRACKER_PROGRESS: \\[\\([0-9]+\\)/[0-9]+\\]" nil t)
+                  (let ((page (string-to-number (match-string 1))))
+                    (if (get-buffer pdf-file-buffer)
+                        (with-current-buffer pdf-file-buffer
+                          (pdf-view-goto-page page))
+                      (message "PDF buffer is not open")))
+                (message ":TRACKER_PROGRESS: property not found."))))
+        (message "No associated org or PDF file is open.")))
+
+  (global-set-key (kbd "C-c c t") 'update-org-tracker-progress)
+  (global-set-key (kbd "C-c c g") 'goto-org-tracker-progress)
+#+end_src
+* Calendar Integration
+** Org-CalDAV
+Disabled
+
+
+;#+begin_src emacs-lisp 
+  (use-package org-caldav
+    :ensure t
+    :config
+    (setq org-caldav-url "https://p63-caldav.icloud.com/12112130846/calendars"
+          org-caldav-calendars
+          '((:calendar-id "1ca12a70-19c9-4ba6-8a8c-baaa8d913b6a"
+                          :files ("~/Orgfiles/roam/00000000000000-todo.org")
+                          :inbox "~/Orgfiles/roam/00000000000000-todo.org"))))
+    (setq org-icalendar-timezone "Europe/London")
+  )
+
+;#+end_src
 
 * EAF
 Disabled, old code [[id:9073108A-6DBD-4411-9CEF-03C78ED67754][here]].
@@ -658,6 +798,7 @@ Disabled, old code [[id:9073108A-6DBD-4411-9CEF-03C78ED67754][here]].
 #+begin_src emacs-lisp 
   (setq ns-use-native-fullscreen t)
 #+end_src
+
 ** macOS Mouse
 I'm using mitsuharu emacs now, so I'll set mouse scrolling to behave according to my zoomer inclinations
 
@@ -672,6 +813,8 @@ OSX Plist is a library for reading and writing property lists (`.plist` files) a
   (use-package osx-plist
     :straight (:host github :repo "gonewest818/osx-plist"))
 #+end_src
+
+#+RESULTS:
 
 In addition, emacs should recognize everything that ends in *.plist as XML and do syntax highlighting / company suggestions / etc appropriately.
 
@@ -722,9 +865,20 @@ A lot of the functions here are stolen and very-slightly-modified from Robert Kr
           (next-line))
       (copilot-complete)))
 #+end_src 
-
-#+RESULTS:
-: yaqub/copilot-complete-or-accept
+** GPTEl
+#+begin_src emacs-lisp
+  (use-package gptel
+    :straight t)
+#+end_src
+* Anki Integration
+#+begin_src emacs-lisp 
+  (use-package anki-editor
+    :straight t
+    :config
+    (global-set-key (kbd "C-c a a") 'anki-editor-insert-note)
+    (global-set-key (kbd "C-c a c") 'anki-editor-cloze-region)
+    (global-set-key (kbd "C-c a p") 'anki-editor-push-notes))
+#+end_src
 
 * Minibuffer Shortcuts
 #+begin_src emacs-lisp 
@@ -733,13 +887,62 @@ A lot of the functions here are stolen and very-slightly-modified from Robert Kr
     (interactive)
     (load-file "~/.emacs.d/init.el"))
 
-  ;; the command "home" opens dired at ~/
+  ;; the command "home" opens home orgfile 
   (defun home ()
     (interactive)
     (find-file "~/Orgfiles/roam/00000000000000-home.org"))
+
+  ;; the command "todo" opens todo orgfile
+  (defun todo ()
+    (interactive)
+    (find-file "~/Orgfiles/roam/00000000000000-todo.org"))
 
   ;; the command "yaqubmacs" opens dired at ~/Development/yaqubmacs
   (defun yaqubmacs ()
     (interactive)
     (dired "~/Development/yaqubmacs"))
+
+  ;; the command nt opens a new term
+  (defun nt ()
+    "Open a new terminal and prompt for a name."
+    (interactive)
+    (let ((name (read-string "Terminal name: ")))
+      (ansi-term "/bin/zsh" (concat "terminal<" name ">"))))
+
+  ;; the command nesh opens a new eshell
+  (defun nesh ()
+    "Open a new eshell and prompt for a name."
+    (interactive)
+    (let ((name (read-string "Eshell name: ")))
+      (let ((buffer (generate-new-buffer (concat "*eshell*<" name ">"))))
+        (with-current-buffer buffer
+          (eshell))
+        (switch-to-buffer buffer))))
 #+end_src
+
+#+RESULTS:
+: nesh
+
+
+* Server Config
+
+I start up emacs in server mode so I can control it from other parts of the OS.
+
+#+begin_src emacs-lisp 
+  (require 'server)
+  (unless (server-running-p)
+    (server-start))
+#+end_src
+
+
+** Helper functions for the rest of the OS
+I use shortcuts to trigger these from context menus.
+
+#+begin_src emacs-lisp
+  (defun open-new-eshell-at (dir)
+    "Open a new eshell buffer at the specified directory DIR."
+    (interactive "Directory: ") ; Ask for the directory interactively
+    (let ((default-directory (expand-file-name dir))) ; Ensure the directory path is absolute
+      (eshell 'N))) ; 'N ensures a new eshell buffer is created
+#+end_src
+
