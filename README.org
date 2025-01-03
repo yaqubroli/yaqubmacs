@@ -1,0 +1,6 @@
+* Jacob's semi-literate emacs config
+This is the README for my emacs config; it's [[https://www.youtube.com/watch?v=urcL86UpqZc][personalised to all my quirks and misdemeanors]] so I wouldn't recommend downloading it and adopting it wholesale. But I might occasionally reference something about my config in a blog post or elsewhere, so here is its public resting place.
+
+Files by role:
+- [[file+emacs:./init.org][init.org]] (init, contains all settings. automatically tangles to ~.emacs.d/init.el~.)
+- [[file+emacs:./gnus.org][gnus.org]] (email config, automatically tangles to ~.gnus.el~)

@@ -1,0 +1,534 @@
+#+PROPERTY: header-args :tangle /Users/yaqub/.emacs.d/init.el
+* Clump
+
+Sort later
+
+#+begin_src emacs-lisp
+  (use-package bind-key
+    :ensure t)
+
+  (setq ring-bell-function 'ignore)
+
+  (setq inhibit-startup-message t)
+  (setq initial-buffer-choice t)
+
+  (setq backup-directory-alist `(("." . "~/.saves")))
+  (setq backup-by-copying t)
+
+  (require 'package)
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                           ("org" . "https://orgmode.org/elpa/")
+                           ("gnu" . "https://elpa.gnu.org/packages/")))
+  (package-initialize)
+  ;; Bootstrap use-package if not installed
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package))
+
+  ;; Ensure packages are installed automatically
+  (setq use-package-always-ensure t)
+  (defun yaqub/tangle-if-org-in-yaqubmacs ()
+    "If the saved file is an .org file within ~/Development/yaqubmacs, tangle it."
+    (let ((target-dir (expand-file-name "~/Development/yaqubmacs")))
+      (when (and (string-suffix-p ".org" buffer-file-name)
+                 (eq major-mode 'org-mode)
+                 (string-prefix-p target-dir buffer-file-name))
+        (org-babel-tangle))))
+
+  (add-hook 'after-save-hook 'yaqub/tangle-if-org-in-yaqubmacs)
+
+  ;; Set the default font for Latin, Greek, and Cyrillic
+  (set-face-attribute 'default nil
+                      :family "Flexi IBM VGA False"
+                      :height 160)  ;; Adjust height as needed
+
+  (set-face-attribute 'fixed-pitch nil
+                      :family (face-attribute 'default :family)
+                      :height (face-attribute 'default :height)
+                      :weight (face-attribute 'default :weight))
+
+  (set-face-attribute 'fixed-pitch-serif nil
+                      :family (face-attribute 'default :family)
+                      :height (face-attribute 'default :height)
+                      :weight (face-attribute 'default :weight))
+
+  ;; Set the font for CJK characters to Source Han Serif with double width
+  (dolist (charset '(kana han cjk-misc bopomofo))
+    (set-fontset-font t charset
+                      (font-spec :family "Source Han Serif" :height 0.85)
+                      nil 'append))
+  ;; Fallback to Andale Mono for any Unicode characters not covered by the above
+  (set-fontset-font t 'unicode
+                    (font-spec :family "Andale Mono")
+                    nil 'append)
+
+  (menu-bar-mode 1)
+  (toggle-scroll-bar -1)
+  (tool-bar-mode -1)
+
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+  (add-to-list 'default-frame-alist '(ns-appearance . dark))
+
+  (use-package bliss-theme
+    :ensure t
+    :config
+    (load-theme 'bliss t))
+
+  (use-package minions
+    :ensure t
+    :config
+    (setq minions-mode-line-lighter "多")
+    (setq minions-mode-line-delimiters '("" . ""))
+    (minions-mode 1))
+
+  (use-package olivetti
+    :ensure t)
+
+  (use-package vertico
+    :ensure t
+    :init
+    (vertico-mode)
+    (setq vertico-cycle t))  ;; Cycle through options like ivy
+
+  ;; Vertico for better minibuffer completion (replaces ivy)
+  (use-package vertico
+    :ensure t
+    :init
+    (vertico-mode)
+    (setq vertico-cycle t))  ;; Cycle through options like ivy
+
+  ;; Marginalia for annotations (docstrings, keybindings, etc.)
+  (use-package marginalia
+    :ensure t
+    :init
+    (marginalia-mode))
+
+  ;; Consult for enhanced M-x, buffer switching, and more (replaces counsel)
+  (use-package consult
+    :ensure t
+    :demand t
+    :bind
+    (("C-s" . consult-line)                  ;; Replaces swiper
+     ("C-x b" . consult-buffer)              ;; Replaces counsel-switch-buffer
+     ("C-M-j" . consult-buffer)              ;; Buffer switch (ivy-like behavior)
+     :map minibuffer-local-map
+     ("C-r" . consult-history)))             ;; Replaces counsel-minibuffer-history
+
+  ;; Orderless for fuzzy matching (replaces ivy's fuzzy searching)
+  (use-package orderless
+    :ensure t
+    :init
+    (setq completion-styles '(orderless basic)
+          orderless-matching-styles '(orderless-literal
+                                      orderless-regexp
+                                      orderless-flex)))
+
+  ;; Evil Mode (Vi-like keybindings)
+  (use-package evil
+    :ensure t
+    :init
+    (setq evil-want-integration t
+          evil-want-keybinding nil)
+    (evil-mode 1))
+
+  ;; Evil-collection for better integration with Emacs commands
+  (use-package evil-collection
+    :ensure t
+    :after evil
+    :config
+    (evil-collection-init))
+
+  ;; Replace buffer switcher with consult-buffer in Evil ex-mode
+  (evil-ex-define-cmd "b" 'consult-buffer)
+
+  ;; Which-key for displaying available keybindings
+  (use-package which-key
+    :ensure t
+    :init
+    (which-key-mode))
+
+  ;; Persist minibuffer history
+  (use-package savehist
+    :ensure t
+    :init
+    (savehist-mode))
+
+  ;; Embark for acting on minibuffer selections
+  (use-package embark
+    :ensure t
+    :bind
+    (("C-." . embark-act)  ;; Trigger actions on selected candidates
+    )
+    :init
+    (setq embark-prompter 'embark-keymap-prompter))
+
+  ;; Embark-consult for seamless integration
+  (use-package embark-consult
+    :ensure t
+    :after (embark consult)
+    :hook
+    (embark-collect-mode . consult-preview-at-point-mode))
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+
+  ;; Define a function to clean up whitespace in the buffer
+  (defun yaqub/cleanup-buffer-whitespace ()
+    "Clean up whitespace in the buffer, including converting tabs to spaces."
+    (interactive)
+    (whitespace-cleanup))
+
+  ;; Define a function to set the key binding in programming modes
+  (defun yaqub/set-cleanup-whitespace-key ()
+    (local-set-key (kbd "C-c w") 'yaqub/cleanup-buffer-whitespace))
+
+  ;; Add the key binding function to the prog-mode-hook
+  (add-hook 'prog-mode-hook 'yaqub/set-cleanup-whitespace-key)
+#+end_src
+** Modeline appearance
+#+begin_src emacs-lisp
+  ;; Set all modeline text to orange
+  (set-face-attribute 'mode-line nil
+                      :foreground "orange"
+                      :background (face-attribute 'mode-line :background)
+                      :weight 'normal)
+
+  (set-face-attribute 'mode-line-inactive nil
+                      :foreground "orange"
+                      :background (face-attribute 'mode-line-inactive :background)
+                      :weight 'normal)
+
+  ;; Set modeline buffer ID to Microgramma
+  (set-face-attribute 'mode-line-buffer-id nil
+                      :family "MicrogrammaDMedExt"
+                      :weight 'normal)
+#+end_src
+
+#+RESULTS:
+
+* Coding
+This section is about setting up tools to help us write code more efficiently.
+
+** Enable line numbers in prog-mode
+#+begin_src emacs-lisp
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+#+end_src
+** Enable whitespace cleanup in prog-mode
+#+begin_src emacs-lisp
+    ;; Define a function to clean up whitespace in the buffer
+    (defun yaqub/cleanup-buffer-whitespace ()
+      "Clean up whitespace in the buffer, including converting tabs to spaces."
+      (interactive)
+      (whitespace-cleanup))
+
+    ;; Define a function to set the key binding in programming modes
+    (defun yaqub/set-cleanup-whitespace-key ()
+      (local-set-key (kbd "C-c w") 'yaqub/cleanup-buffer-whitespace))
+
+    ;; Add the key binding function to the prog-mode-hook
+    (add-hook 'prog-mode-hook 'yaqub/set-cleanup-whitespace-key)
+#+end_src
+** Setup Yasnippet
+Yasnippet is a template system for Emacs.
+
+#+begin_src emacs-lisp
+  (use-package yasnippet
+    :ensure t
+    :init
+    (yas-global-mode 1))
+#+end_src
+
+** Setup Company-mode
+Company mode is a text completion framework.
+
+#+begin_src emacs-lisp
+  (use-package company
+    :ensure t
+    :init
+    (global-company-mode))
+#+end_src
+
+*** Setup Company-box
+Company-box is a frontend for company-mode, it provides a dropdown menu interface for completions.
+
+#+begin_src emacs-lisp
+  (use-package company-box
+    :ensure t
+    :hook (company-mode . company-box-mode))
+#+end_src
+
+** Setup Editorconfig
+#+begin_src emacs-lisp
+  (use-package editorconfig
+    :ensure t
+    :config
+    (editorconfig-mode 1))
+#+end_src
+** Magit
+Magit is an interface to the version control system Git, implemented as an Emacs package. It aspires to be a complete Git porcelain.
+
+#+begin_src emacs-lisp
+  (use-package magit
+    :ensure t
+    :bind (("C-x g" . magit-status)))
+#+end_src
+** YAML Mode
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
+#+end_src
+* Writing
+This section is about setting up tools to help us write prose more efficiently; mostly org config.
+** Global bibliography variables
+#+begin_src emacs-lisp
+  (setq yaqub/global-bibliography '("~/Zotero/References.bib")
+        yaqub/global-library-path '("~/Zotero")
+        yaqub/global-notes-path "~/Orgfiles/roam/")
+#+end_src
+** Setup Org
+Here, we separate the org setup into its own function for clarity.
+
+#+begin_src emacs-lisp
+  (use-package org
+    :ensure t
+    :config
+    (setq org-hide-emphasis-markers t)
+    (setq org-startup-indented t)
+    ;; Enable olivetti on all org buffers
+    (add-hook 'org-mode-hook 'olivetti-mode)
+    ;; add keybindings for org-mark-ring-goto at C-c C-<left> and C-c C-<right>
+    (define-key org-mode-map (kbd "C-c <left>") 'org-mark-ring-goto)
+    (define-key org-mode-map (kbd "C-c <right>") 'org-mark-ring-goto)
+    ;; add keybindings for org-mark-ring-push at C-c C-<up> and C-c C-<down>
+    (define-key org-mode-map (kbd "C-c <up>") 'org-mark-ring-push)
+    (define-key org-mode-map (kbd "C-c <down>") 'org-mark-ring-push)
+    )
+#+end_src
+*** Org-roam
+Very important.
+#+begin_src emacs-lisp
+  (use-package org-roam
+    :ensure t
+    :custom
+    (org-roam-directory "~/Orgfiles/roam")
+    :bind (("C-c n f" . org-roam-node-find)
+           ("C-c n i" . org-roam-node-insert)
+           ("C-c n g" . org-roam-graph)
+           ("C-c n c" . org-roam-capture)
+           ("C-c n d" . org-roam-dailies-goto-today)
+           ("C-c n D" . org-roam-dailies-goto-date)))
+
+
+  (defun yaqub/org-roam-setup-on-startup ()
+    "Open specific roam file and today's daily note side by side on Emacs startup."
+    ;; Open the specific roam file
+    (find-file "/Users/yaqub/Orgfiles/roam/00000000000000-home.org"))
+  ;; Add the function to the after-init-hook to ensure it runs after Emacs is fully loaded
+  (add-hook 'after-init-hook 'yaqub/org-roam-setup-on-startup)
+#+end_src
+*** Making sure org links open in the same window
+#+begin_src emacs-lisp
+    (setq org-link-frame-setup '((file . find-file)))
+#+end_src
+** Setup LaTeX
+*** Set up AucTeX
+#+begin_src emacs-lisp
+  (use-package auctex
+    :ensure t
+    :mode ("\\.tex\\'" . LaTeX-mode)
+    :config
+    (setq TeX-auto-save t)
+    (setq TeX-parse-self t)
+    (setq-default TeX-master nil)
+
+    (add-hook 'LaTeX-mode-hook 'visual-line-mode)
+    (add-hook 'LaTeX-mode-hook 'flyspell-mode)
+    (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+
+    (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+    (setq reftex-plug-into-AUCTeX t)
+    (setq TeX-PDF-mode t)
+
+    ;; Use Biber with AUCTeX
+    (setq TeX-command-BibTeX "Biber"))
+#+end_src
+* Reading
+** Using PDF-Tools instead of DocView
+#+begin_src emacs-lisp
+  (use-package pdf-tools
+    :ensure t
+    :config
+    ;; Ensure pdf-tools is initialized after installation
+    (pdf-tools-install)
+
+    ;; Make sure PDFs fit the page by default
+    (setq-default pdf-view-display-size 'fit-page)
+
+    ;; Set pdf-view-mode as the default for PDF files
+    (add-to-list 'auto-mode-alist '("\\.pdf\\'" . pdf-view-mode))
+    (setq pdf-cache-prefetch-delay 0.1)
+    ;; Optional: open PDFs in a new frame by default
+    ;; (setq pdf-view-use-new-open t)
+    ;; set keybindings
+    ;; s-left: image-forward-hscroll 5
+    ;; s-right: image-backward-hscroll 5
+    ;; s-up: image-previous-line 5
+    ;; s-down: image-next-line 5
+    (define-key pdf-view-mode-map (kbd "s-<left>") 'image-forward-hscroll)
+    (define-key pdf-view-mode-map (kbd "s-<right>") 'image-backward-hscroll)
+    (define-key pdf-view-mode-map (kbd "s-<up>") 'image-previous-line)
+    (define-key pdf-view-mode-map (kbd "s-<down>") 'image-next-line)
+    ;; ok now make it scroll 5x faster
+    (define-key pdf-view-mode-map (kbd "C-s-<left>") (lambda () (interactive) (image-forward-hscroll 5)))
+    (define-key pdf-view-mode-map (kbd "C-s-<right>") (lambda () (interactive) (image-backward-hscroll 5)))
+    (define-key pdf-view-mode-map (kbd "C-s-<up>") (lambda () (interactive) (image-previous-line 5)))
+    (define-key pdf-view-mode-map (kbd "C-s-<down>") (lambda () (interactive) (image-next-line 5)))
+  )
+#+end_src
+
+#+RESULTS:
+: t
+
+** /nov.el/ support
+Using nov.el for epub reading
+#+begin_src emacs-lisp
+  (use-package nov
+    :ensure t
+    :mode ("\\.epub\\'" . nov-mode)
+    :config
+    ;; enable olivetti on all nov buffers
+    (add-hook 'nov-mode-hook 'olivetti-mode))
+#+end_src
+* macOS
+** macOS fullscreen
+#+begin_src emacs-lisp
+  (setq ns-use-native-fullscreen t)
+#+end_src
+
+** macOS Mouse
+I'm using mitsuharu emacs now, so I'll set mouse scrolling to behave according to my zoomer inclinations
+
+#+begin_src emacs-lisp
+  (setq mac-mouse-wheel-smooth-scroll t)
+#+end_src
+
+** Property lists
+OSX Plist is a library for reading and writing property lists (`.plist` files) as used in OS X.
+
+#+begin_src emacs-lisp
+  (use-package osx-plist
+    :ensure t
+    :vc (:url "https://github.com/gonewest818/osx-plist"))
+#+end_src
+
+#+RESULTS:
+
+In addition, emacs should recognize everything that ends in *.plist as XML and do syntax highlighting / company suggestions / etc appropriately.
+
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.plist\\'" . xml-mode))
+#+end_src
+
+* Anki Integration
+#+begin_src emacs-lisp
+  (use-package anki-editor
+    :ensure t
+    :config
+    (global-set-key (kbd "C-c a a") 'anki-editor-insert-note)
+    (global-set-key (kbd "C-c a c") 'anki-editor-cloze-region)
+    (global-set-key (kbd "C-c a p") 'anki-editor-push-notes))
+#+end_src
+
+* Minibuffer Shortcuts
+#+begin_src emacs-lisp
+  ;; the command "eval-init" evaluates init.el
+  (defun eval-init ()
+    (interactive)
+    (load-file "~/.emacs.d/init.el"))
+
+  ;; the command "home" opens home orgfile
+  (defun home ()
+    (interactive)
+    (find-file "~/Orgfiles/roam/00000000000000-home.org"))
+
+  ;; the command "todo" opens todo orgfile
+  (defun todo ()
+    (interactive)
+    (find-file "~/Orgfiles/roam/00000000000000-todo.org"))
+
+  ;; the command "yaqubmacs" opens dired at ~/Development/yaqubmacs
+  (defun yaqubmacs ()
+    (interactive)
+    (dired "~/Development/yaqubmacs"))
+
+  ;; the command nt opens a new term
+  (defun nt ()
+    "Open a new terminal and prompt for a name."
+    (interactive)
+    (let ((name (read-string "Terminal name: ")))
+      (ansi-term "/bin/zsh" (concat "terminal<" name ">"))))
+
+  ;; the command nesh opens a new eshell
+  (defun nesh ()
+    "Open a new eshell and prompt for a name."
+    (interactive)
+    (let ((name (read-string "Eshell name: ")))
+      (let ((buffer (generate-new-buffer (concat "*eshell*<" name ">"))))
+        (with-current-buffer buffer
+          (eshell))
+        (switch-to-buffer buffer))))
+
+  ;; the command win opens a windows command prompt
+  (defun win ()
+    "Open a Windows PowerShell session."
+    (interactive)
+    (let* ((user "yaqub")
+           (host "WINVM.local")
+           (password (with-temp-buffer
+                       (insert-file-contents "~/.winssh/password")
+                       (buffer-string)))
+           (ssh-command (concat "sshpass -p '" password "' ssh -o StrictHostKeyChecking=no " user "@" host " powershell.exe -NoExit"))
+           (term-buffer (ansi-term "/bin/bash")))  ;; Open the terminal buffer
+      ;; Rename the buffer to *windows*
+      (with-current-buffer term-buffer
+        (rename-buffer "*windows*"))
+      ;; Send the SSH command to start PowerShell
+      (term-send-raw-string (concat ssh-command "\r\n"))
+      ;; Send 'cls' after connection (PowerShell also supports 'cls')
+      (run-with-timer 1 nil
+                      (lambda ()
+                        (term-send-raw-string "cls\r\n")))))
+#+end_src
+
+#+RESULTS:
+: win
+
+* Server Config
+
+I start up emacs in server mode so I can control it from other parts of the OS.
+
+#+begin_src emacs-lisp
+  (require 'server)
+  (unless (server-running-p)
+    (server-start))
+#+end_src
+
+
+** Helper functions for the rest of the OS
+I use shortcuts to trigger these from context menus.
+
+#+begin_src emacs-lisp
+  (defun open-new-eshell-at (dir)
+    "Open a new eshell buffer at the specified directory DIR."
+    (interactive "Directory: ") ; Ask for the directory interactively
+    (let ((default-directory (expand-file-name dir))) ; Ensure the directory path is absolute
+      (eshell 'N))) ; 'N ensures a new eshell buffer is created
+#+end_src
+* Safe local vars
+Apparently this is needed
+#+begin_src emacs-lisp
+  (setq safe-local-variable-values
+        '((evil-shift-width . 8)
+          (indent-tabs-mode . t)
+          (tab-width . 8)
+          (require-final-newline . t)
+          (eval add-hook 'before-save-hook #'editorconfig--delete-trailing-whitespace nil t)))
+#+end_src
