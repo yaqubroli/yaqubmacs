@@ -1,20 +1,27 @@
 #+PROPERTY: header-args :tangle /Users/yaqub/.emacs.d/init.el
-* Clump
+* Initial Setup
 
-Sort later
+** Niceties
 
 #+begin_src emacs-lisp
-  (use-package bind-key
-    :ensure t)
 
   (setq ring-bell-function 'ignore)
 
   (setq inhibit-startup-message t)
   (setq initial-buffer-choice t)
 
+#+end_src
+
+** Backup to saves instead of leaving temporary files in .
+
+#+begin_src emacs-lisp
   (setq backup-directory-alist `(("." . "~/.saves")))
   (setq backup-by-copying t)
+#+end_src
 
+** Initialise use-package
+
+#+begin_src emacs-lisp
   (require 'package)
   (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                            ("org" . "https://orgmode.org/elpa/")
@@ -27,6 +34,12 @@ Sort later
 
   ;; Ensure packages are installed automatically
   (setq use-package-always-ensure t)
+
+#+end_src
+
+** Auto-tangle this init and other literate .el files
+
+#+begin_src emacs-lisp
   (defun yaqub/tangle-if-org-in-yaqubmacs ()
     "If the saved file is an .org file within ~/Development/yaqubmacs, tangle it."
     (let ((target-dir (expand-file-name "~/Development/yaqubmacs")))
@@ -36,7 +49,13 @@ Sort later
         (org-babel-tangle))))
 
   (add-hook 'after-save-hook 'yaqub/tangle-if-org-in-yaqubmacs)
+#+end_src
 
+* Appearance
+
+** Fonts
+
+#+begin_src emacs-lisp
   ;; Set the default font for Latin, Greek, and Cyrillic
   (set-face-attribute 'default nil
                       :family "Flexi IBM VGA False"
@@ -62,6 +81,10 @@ Sort later
                     (font-spec :family "Andale Mono")
                     nil 'append)
 
+#+end_src
+
+** Mac env. specific settings
+#+begin_src emacs-lisp
   (menu-bar-mode 1)
   (toggle-scroll-bar -1)
   (tool-bar-mode -1)
@@ -69,6 +92,12 @@ Sort later
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
   (add-to-list 'default-frame-alist '(ns-appearance . dark))
 
+
+#+end_src
+
+** Theming and modeline
+
+#+begin_src emacs-lisp
   (use-package bliss-theme
     :ensure t
     :config
@@ -80,6 +109,13 @@ Sort later
     (setq minions-mode-line-lighter "多")
     (setq minions-mode-line-delimiters '("" . ""))
     (minions-mode 1))
+#+end_src
+
+* QoL Packages
+
+#+begin_src emacs-lisp
+  (use-package bind-key
+    :ensure t)
 
   (use-package olivetti
     :ensure t)
@@ -315,19 +351,21 @@ Very important.
            ("C-c n c" . org-roam-capture)
            ("C-c n d" . org-roam-dailies-goto-today)
            ("C-c n D" . org-roam-dailies-goto-date)))
-
-
-  (defun yaqub/org-roam-setup-on-startup ()
-    "Open specific roam file and today's daily note side by side on Emacs startup."
-    ;; Open the specific roam file
-    (find-file "/Users/yaqub/Orgfiles/roam/00000000000000-home.org"))
-  ;; Add the function to the after-init-hook to ensure it runs after Emacs is fully loaded
-  (add-hook 'after-init-hook 'yaqub/org-roam-setup-on-startup)
 #+end_src
 *** Making sure org links open in the same window
 #+begin_src emacs-lisp
     (setq org-link-frame-setup '((file . find-file)))
 #+end_src
+*** Org-download
+#+begin_src emacs-lisp
+  (use-package org-download
+    :ensure t
+    :custom
+    (org-download-screenshot-method "screencapture")
+    (org-download-method 'attach)
+    (org-download-timestamp t))
+#+end_src
+
 ** Setup LaTeX
 *** Set up AucTeX
 #+begin_src emacs-lisp
@@ -447,12 +485,12 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
   ;; the command "home" opens home orgfile
   (defun home ()
     (interactive)
-    (find-file "~/Orgfiles/roam/00000000000000-home.org"))
+    (find-file "~/Orgfiles/roam/home.org"))
 
   ;; the command "todo" opens todo orgfile
   (defun todo ()
     (interactive)
-    (find-file "~/Orgfiles/roam/00000000000000-todo.org"))
+    (find-file "~/Orgfiles/roam/todo.org"))
 
   ;; the command "yaqubmacs" opens dired at ~/Development/yaqubmacs
   (defun yaqubmacs ()
@@ -523,12 +561,7 @@ I use shortcuts to trigger these from context menus.
       (eshell 'N))) ; 'N ensures a new eshell buffer is created
 #+end_src
 * Safe local vars
-Apparently this is needed
+Unsafe, but convenient
 #+begin_src emacs-lisp
-  (setq safe-local-variable-values
-        '((evil-shift-width . 8)
-          (indent-tabs-mode . t)
-          (tab-width . 8)
-          (require-final-newline . t)
-          (eval add-hook 'before-save-hook #'editorconfig--delete-trailing-whitespace nil t)))
+  (setq enable-local-variables :all)
 #+end_src
