@@ -325,9 +325,11 @@ Here, we separate the org setup into its own function for clarity.
 #+begin_src emacs-lisp
   (use-package org
     :ensure t
+    :custom
+    (org-hide-emphasis-markers t)
+    (org-startup-indented t)
+    (org-startup-with-inline-images t)
     :config
-    (setq org-hide-emphasis-markers t)
-    (setq org-startup-indented t)
     ;; Enable olivetti on all org buffers
     (add-hook 'org-mode-hook 'olivetti-mode)
     ;; add keybindings for org-mark-ring-goto at C-c C-<left> and C-c C-<right>
@@ -362,8 +364,7 @@ Very important.
     :ensure t
     :custom
     (org-download-screenshot-method "screencapture")
-    (org-download-method 'attach)
-    (org-download-timestamp t))
+    (org-download-method 'attach))
 #+end_src
 
 ** Setup LaTeX
@@ -536,8 +537,14 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
                         (term-send-raw-string "cls\r\n")))))
 #+end_src
 
-#+RESULTS:
-: win
+* Open home.org by default
+
+#+begin_src emacs-lisp
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (find-file "~/Orgfiles/roam/home.org")
+              (delete-other-windows)))
+#+end_src
 
 * Server Config
 
