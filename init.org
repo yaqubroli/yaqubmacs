@@ -1,4 +1,5 @@
 #+PROPERTY: header-args :tangle /Users/yaqub/.emacs.d/init.el
+
 * Initial Setup
 
 ** Niceties
@@ -52,7 +53,6 @@
 #+end_src
 
 * Appearance
-
 ** Fonts
 
 #+begin_src emacs-lisp
@@ -239,10 +239,16 @@
 #+end_src
 
 #+RESULTS:
+** Evil undo tree
+#+begin_src emacs-lisp
+  (use-package undo-tree
+    :ensure t
+    :config
+    (global-undo-tree-mode)
+    (evil-set-undo-system 'undo-tree))
+#+end_src
 
 * Coding
-This section is about setting up tools to help us write code more efficiently.
-
 ** Enable line numbers in prog-mode
 #+begin_src emacs-lisp
   (add-hook 'prog-mode-hook 'display-line-numbers-mode)
@@ -306,13 +312,16 @@ Magit is an interface to the version control system Git, implemented as an Emacs
     :ensure t
     :bind (("C-x g" . magit-status)))
 #+end_src
-** YAML Mode
+** Auto-install treesit grammars
 #+begin_src emacs-lisp
-  (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
-  (add-to-list 'auto-mode-alist '("\\.yaml\\'" . yaml-ts-mode))
+  (use-package treesit-auto
+    :ensure t
+    :config
+    (setq treesit-auto-install 'prompt) ; Automatically install grammars
+    (global-treesit-auto-mode))e
 #+end_src
+
 * Writing
-This section is about setting up tools to help us write prose more efficiently; mostly org config.
 ** Global bibliography variables
 #+begin_src emacs-lisp
   (setq yaqub/global-bibliography '("~/Zotero/References.bib")
@@ -358,6 +367,43 @@ Very important.
 #+begin_src emacs-lisp
     (setq org-link-frame-setup '((file . find-file)))
 #+end_src
+When org-roam is enabled, make org-attach always attach to the /file/, not the /heading/.
+
+#+begin_src emacs-lisp
+  (defun yaqub/org-attach-use-file-id ()
+    "Use the top-level :ID: property for attachments unless overridden by :ATTACH_INDIVIDUALLY:."
+    (save-excursion
+      (goto-char (point-min))
+      (let ((file-id (org-entry-get (point) "ID" t))
+            (attach-individual (org-entry-get (point-min) "ATTACH_INDIVIDUALLY")))
+        (if (and file-id (not attach-individual))
+            (setq-local org-attach-id-dir (concat (file-name-as-directory org-attach-directory) file-id))))))
+
+  (add-hook 'org-mode-hook 'yaqub/org-attach-use-file-id)
+
+  (defun yaqub/org-attach-individually ()
+    "Add :ATTACH_INDIVIDUALLY: property to the current heading."
+    (interactive)
+    (org-set-property "ATTACH_INDIVIDUALLY" "t")
+    (message ":ATTACH_INDIVIDUALLY: property added."))
+
+  (defun yaqub/org-attach-file-to-file-id ()
+    "Attach a file to the top-level ID if present, regardless of cursor position."
+    (interactive)
+    (save-excursion
+      (goto-char (point-min))
+      (let ((file-id (org-entry-get (point) "ID" t)))
+        (if file-id
+            (setq-local org-attach-id-dir (concat (file-name-as-directory org-attach-directory) file-id)))))
+    (save-excursion
+      (goto-char (point-min))
+      (org-attach)))
+
+  ;; Bind this to the usual attachment keybinding (C-c c-a)
+  (with-eval-after-load 'org
+    (define-key org-mode-map (kbd "C-c c-a") #'yaqub/org-attach-file-to-file-id))
+#+end_src
+
 *** Org-download
 #+begin_src emacs-lisp
   (use-package org-download
@@ -436,6 +482,16 @@ Using nov.el for epub reading
     ;; enable olivetti on all nov buffers
     (add-hook 'nov-mode-hook 'olivetti-mode))
 #+end_src
+
+* Links to other applications/services
+** Finder
+
+#+begin_src emacs-lisp
+  (use-package reveal-in-osx-finder
+    :ensure t
+    :bind ("C-c z" . reveal-in-osx-finder))
+#+end_src
+
 * macOS
 ** macOS fullscreen
 #+begin_src emacs-lisp
@@ -464,6 +520,14 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
 
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.plist\\'" . xml-mode))
+#+end_src
+
+** Tooltips workaround
+
+See https://github.com/vedang/pdf-tools/issues/298
+
+#+begin_src emacs-lisp
+  (setq use-system-tooltips t)
 #+end_src
 
 * Anki Integration
@@ -538,7 +602,6 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
 #+end_src
 
 * Open home.org by default
-
 #+begin_src emacs-lisp
   (add-hook 'emacs-startup-hook
             (lambda ()
@@ -547,9 +610,6 @@ In addition, emacs should recognize everything that ends in *.plist as XML and d
 #+end_src
 
 * Server Config
-
-I start up emacs in server mode so I can control it from other parts of the OS.
-
 #+begin_src emacs-lisp
   (require 'server)
   (unless (server-running-p)
